@@ -1,0 +1,19 @@
+cat > .gitignore << 'EOF'
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+xcuserdata/
+.DS_Store
+
+# CocoaPods (kalau nanti pakai)
+Pods/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Jenkins/CI artifacts
+build/reports/
+EOF
