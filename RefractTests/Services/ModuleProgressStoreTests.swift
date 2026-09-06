@@ -11,48 +11,48 @@ import XCTest
 final class ModuleProgressStoreTests: XCTestCase {
     
     private var testDefaults: UserDefaults!
-    private var store: ModuleProgressStore!
+    private var testStore: ModuleProgressStore!
     
     override func setUp() {
         super.setUp()
         // suitenya terpisah setiap test biar ga numpuk
         testDefaults = UserDefaults(suiteName: #file) // #file -> compiler directive, auto replace jadi string path file ini sendiri
         testDefaults.removePersistentDomain(forName: #file) // kosongin suite
-        store = ModuleProgressStore(defaults: testDefaults)
+        testStore = ModuleProgressStore(defaults: testDefaults)
     }
     
     override func tearDown() {
         testDefaults.removePersistentDomain(forName: #file)
-        store = nil
+        testStore = nil
         testDefaults = nil
         super.tearDown()
     }
     
     func test_isComplete_isFalse_forFreshStore() {
-        XCTAssertFalse(store.isComplete(.brightness))
+        XCTAssertFalse(testStore.isComplete(.brightness))
     }
     
     func test_isComplete_isTrue() {
-        store.markComplete(.brightness)
-        XCTAssertTrue(store.isComplete(.brightness))
+        testStore.markComplete(.brightness)
+        XCTAssertTrue(testStore.isComplete(.brightness))
     }
     
     func test_isComplete_isNotAffectOtherModules() {
-        store.markComplete(.brightness)
-        XCTAssertFalse(store.isComplete(.contrast))
+        testStore.markComplete(.brightness)
+        XCTAssertFalse(testStore.isComplete(.contrast))
     }
     
     func test_markComplete_isNotChangingWhenRestart() { // test kalo app di restart (progress TIDAK AKAN BERUBAH)
-        store.markComplete(.vibrance)
+        testStore.markComplete(.vibrance)
         let reloadedStore = ModuleProgressStore(defaults: testDefaults)
         XCTAssertTrue(reloadedStore.isComplete(.vibrance))
     }
     
     func test_onProgressChanged_onlyOnceMarkComplete() {
         var callCount = 0
-        store.onProgressChanged = {callCount += 1}
-        store.markComplete(.contrast)
-        store.markComplete(.contrast)
+        testStore.onProgressChanged = {callCount += 1}
+        testStore.markComplete(.contrast)
+        testStore.markComplete(.contrast)
         XCTAssertEqual(callCount, 1) // setiap module cuma sekali bisa markComplete jadi harusnya onProgressChanged cuma di-call sekali
     }
 }
