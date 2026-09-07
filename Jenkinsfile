@@ -16,7 +16,7 @@ pipeline {
 
         stage('Install xcpretty') {
             steps {
-                sh 'gem install xcpretty --no-document'
+                sh 'gem install xcpretty --user-install'
             }
         }
 
