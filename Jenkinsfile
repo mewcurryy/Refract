@@ -4,7 +4,7 @@ pipeline {
     environment {
         PROJECT = 'Refract.xcodeproj'
         SCHEME = 'Refract'
-        DESTINATION = 'platform=iOS Simulator, name=iPhone 17, OS=latest'
+        DESTINATION = 'platform=iOS Simulator,name=iPhone 17, OS=latest'
     }
 
     stages {
@@ -23,6 +23,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh """
+                    export PATH="\$PATH:\$(ruby -rubygems -e 'puts Gem.user_dir')/bin"
                     set -o pipefail && xcodebuild build \
                         -project ${PROJECT} \
                         -scheme ${SCHEME} \
@@ -35,6 +36,7 @@ pipeline {
         stage('Unit Test') {
             steps {
                 sh """
+                    export PATH="\$PATH:\$(ruby -rubygems -e 'puts Gem.user_dir')/bin"
                     set -o pipefail && xcodebuild test \
                         -project ${PROJECT} \
                         -scheme ${SCHEME} \
