@@ -17,10 +17,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         #endif
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
-        // let rootVC = HomeViewController()
+        let rootVC = HomeViewController()
 //        let viewModel = TutorialModuleViewModel(paramsInfo: GradingParameterCatalog.all.first!, sampleImage: UIImage(named: "sample_photo") ?? UIImage())
 //        let rootVC = TutorialModuleViewController(viewModel: viewModel)
-        let rootVC = DebugCellPreviewVC()
+//        let rootVC = DebugCellPreviewVC()
         window.rootViewController = UINavigationController(rootViewController: rootVC)
         window.makeKeyAndVisible()
         self.window = window
