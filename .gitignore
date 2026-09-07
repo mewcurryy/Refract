@@ -17,5 +17,5 @@ Pods/
 # Jenkins/CI artifacts
 build/reports/
 
-DebugCellPreviewVC.swift
+**/DebugCellPreviewVC.swift
 EOF
