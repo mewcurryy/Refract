@@ -26,6 +26,7 @@ final class TutorialModuleViewController: UIViewController {
     private let screenTitleLabel = UILabel()
     private let positionLabel = UILabel()
     private let progressPercentageLabel = UILabel()
+    private let completedBadgeLabel = UILabel()
     
     private let progressTrackView = UIView()
     private let progressFillView = UIView()
@@ -47,8 +48,9 @@ final class TutorialModuleViewController: UIViewController {
     private let upcomingStack = UIStackView()
     private let shareButton = UIButton(type: .system)
     
-    // print UIKit component -> for learning
-    private var hasPrintedDebugInfo = false
+#if DEBUG // for reset progress
+    private let debugResetButton = UIButton(type: .system)
+#endif
     
     init(viewModel: TutorialModuleViewModel) {
         self.viewModel = viewModel
@@ -65,9 +67,15 @@ final class TutorialModuleViewController: UIViewController {
         view.backgroundColor = Palette.background
         //        contentStackView.backgroundColor = .white
         setupLayout()
-        configureStaticContent()
         bindViewModel()
+        configureStaticContent()
         viewModel.viewDidLoad()
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.refreshFromStore()
     }
     
     private func setupLayout() {
@@ -99,6 +107,9 @@ final class TutorialModuleViewController: UIViewController {
         setupUpcomingSection()
         setupShareButton()
         
+#if DEBUG
+        setupDebugResetButton()
+#endif
     }
     
     private func setupHeaderRow() {
@@ -106,21 +117,27 @@ final class TutorialModuleViewController: UIViewController {
         backButton.tintColor = Palette.primaryText
         backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
         
-        screenTitleLabel.font = .systemFont(ofSize: 22, weight: .bold)
+        screenTitleLabel.font = .systemFont(ofSize: 18, weight: .bold)
         screenTitleLabel.textColor = Palette.primaryText
-//        screenTitleLabel.text = viewModel.paramsInfo.title
+        //        screenTitleLabel.text = viewModel.paramsInfo.title
+        
+        completedBadgeLabel.text = "✓ COMPLETED"
+        completedBadgeLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+        completedBadgeLabel.textColor = .systemGreen
+        completedBadgeLabel.isHidden = true
         
         let spacer = UIView()
         
-        let headerRow = UIStackView(arrangedSubviews: [backButton, screenTitleLabel, spacer])
+        let headerRow = UIStackView(arrangedSubviews: [backButton, screenTitleLabel, spacer, completedBadgeLabel])
         headerRow.axis = .horizontal
         headerRow.spacing = 15
         headerRow.alignment = .center
+        
         contentStackView.addArrangedSubview(headerRow) // untuk masukkin component ke dalam UIStackView secara rapi
         
         positionLabel.font = .systemFont(ofSize: 14)
         positionLabel.textColor = Palette.secondaryText
-//        positionLabel.text = viewModel.positionLabel
+        //        positionLabel.text = viewModel.positionLabel
         
         progressPercentageLabel.font = .systemFont(ofSize: 14)
         progressPercentageLabel.textColor = Palette.secondaryText
@@ -137,35 +154,36 @@ final class TutorialModuleViewController: UIViewController {
         progressTrackView.translatesAutoresizingMaskIntoConstraints = false
         progressTrackView.heightAnchor.constraint(equalToConstant: 6).isActive = true
         
+        // fill untuk progress
         progressFillView.backgroundColor = Palette.primaryText
         progressFillView.layer.cornerRadius = 3
         progressFillView.translatesAutoresizingMaskIntoConstraints = false
         progressTrackView.addSubview(progressFillView)
         
-        progressFillWidthConstraint = progressFillView.widthAnchor.constraint(equalToConstant: 0)
+        progressFillWidthConstraint = progressFillView.widthAnchor.constraint(equalToConstant: 0) // dijadiin 0 dulu karena progress dimulai dari 0
         NSLayoutConstraint.activate([
             progressFillView.leadingAnchor.constraint(equalTo: progressTrackView.leadingAnchor),
+            progressFillWidthConstraint,
             progressFillView.topAnchor.constraint(equalTo: progressTrackView.topAnchor),
             progressFillView.bottomAnchor.constraint(equalTo: progressTrackView.bottomAnchor),
-            progressFillWidthConstraint,
         ])
         
         contentStackView.addArrangedSubview(progressTrackView)
     }
     
-    
     private func setupPreviewSection() {
         previewImageView.contentMode = .scaleAspectFill
-        previewImageView.layer.cornerRadius = 12
         previewImageView.clipsToBounds = true
+        previewImageView.layer.cornerRadius = 12
         previewImageView.backgroundColor = Palette.cardBackground
         previewImageView.heightAnchor.constraint(equalToConstant: 220).isActive = true
+        
         contentStackView.addArrangedSubview(previewImageView)
         
-        parameterNameLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        parameterNameLabel.font = .systemFont(ofSize: 18, weight: .bold)
         parameterNameLabel.textColor = Palette.primaryText
         
-        valueLabel.font = .monospacedDigitSystemFont(ofSize: 15, weight: .medium)
+        valueLabel.font = .monospacedDigitSystemFont(ofSize: 14, weight: .medium)
         valueLabel.textColor = Palette.secondaryText
         valueLabel.textAlignment = .right
         
@@ -175,6 +193,7 @@ final class TutorialModuleViewController: UIViewController {
         
         slider.minimumTrackTintColor = Palette.primaryText
         slider.maximumTrackTintColor = Palette.progressTrack
+        //        slider.thumbTintColor = .blue
         slider.addTarget(self, action: #selector(sliderChanged(_:)), for: .valueChanged)
         contentStackView.addArrangedSubview(slider)
         
@@ -187,6 +206,7 @@ final class TutorialModuleViewController: UIViewController {
         tryThisConfig.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
         tryThisButton.configuration = tryThisConfig
         tryThisButton.addTarget(self, action: #selector(tryThisTapped), for: .touchUpInside)
+        
         contentStackView.addArrangedSubview(tryThisButton)
     }
     
@@ -196,16 +216,15 @@ final class TutorialModuleViewController: UIViewController {
             $0.clipsToBounds = true
             $0.layer.cornerRadius = 10
             $0.backgroundColor = Palette.cardBackground
-            $0.heightAnchor.constraint(equalToConstant: 100).isActive = true
+            $0.heightAnchor.constraint(equalToConstant: 120).isActive = true
         }
         [extremeLowLabel, extremeHighLabel].forEach {
-            $0.font = .systemFont(ofSize: 11)
+            $0.font = .systemFont(ofSize: 12)
             $0.textColor = Palette.secondaryText
             $0.textAlignment = .center
-            $0.numberOfLines = 0
         }
-        extremeLowLabel.text = "low"
-        extremeHighLabel.text = "high"
+        extremeLowLabel.text = "LOW"
+        extremeHighLabel.text = "HIGH"
         
         let lowColumn = UIStackView(arrangedSubviews: [extremeLowImageView, extremeLowLabel])
         lowColumn.axis = .vertical
@@ -214,9 +233,10 @@ final class TutorialModuleViewController: UIViewController {
         highColumn.axis = .vertical
         highColumn.spacing = 4
         
+        // gabungin keduanya
         extremeStack.axis = .horizontal
         extremeStack.spacing = 12
-        extremeStack.distribution = .fillEqually
+        extremeStack.distribution = .fillEqually // biar ketengah kotaknya
         extremeStack.addArrangedSubview(lowColumn)
         extremeStack.addArrangedSubview(highColumn)
         contentStackView.addArrangedSubview(extremeStack)
@@ -232,6 +252,8 @@ final class TutorialModuleViewController: UIViewController {
         upcomingStack.spacing = 10
         contentStackView.addArrangedSubview(upcomingStack)
         
+        //        let dummyModules = GradingParameterCatalog.all
+        //        upcomingStack.addArrangedSubview(makeUpcomingRow(for: viewModel.upcomingModules.first!))
         for module in viewModel.upcomingModules {
             let row = makeUpcomingRow(for: module)
             upcomingStack.addArrangedSubview(row)
@@ -244,8 +266,8 @@ final class TutorialModuleViewController: UIViewController {
         container.layer.cornerRadius = 12
         
         let titleLabel = UILabel()
-        titleLabel.text = module.title
-        titleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.text = module.cardTitle
+        titleLabel.font = .systemFont(ofSize: 14, weight: .semibold)
         titleLabel.textColor = Palette.primaryText
         
         let durationLabel = UILabel()
@@ -258,12 +280,12 @@ final class TutorialModuleViewController: UIViewController {
         textColumn.spacing = 4
         
         let startBadge = UILabel()
-        startBadge.text = "Start"
-        startBadge.font = .systemFont(ofSize: 13, weight: .semibold)
+        startBadge.text = "START"
+        startBadge.font = .systemFont(ofSize: 12, weight: .semibold)
         startBadge.textColor = Palette.secondaryText
         startBadge.backgroundColor = Palette.progressTrack
         startBadge.textAlignment = .center
-        startBadge.layer.cornerRadius = 18
+        startBadge.layer.cornerRadius = 16
         startBadge.clipsToBounds = true
         startBadge.translatesAutoresizingMaskIntoConstraints = false
         startBadge.widthAnchor.constraint(equalToConstant: 60).isActive = true
@@ -279,50 +301,78 @@ final class TutorialModuleViewController: UIViewController {
         container.addSubview(row)
         NSLayoutConstraint.activate([
             row.topAnchor.constraint(equalTo: container.topAnchor),
-            row.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            row.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             row.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            row.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: container.trailingAnchor)
         ])
         
-        // Buat seluruh row bisa di-tap, kita pasang UITapGestureRecognizer di container
         let tap = UITapGestureRecognizer(target: self, action: #selector(upcomingRowTapped(_:)))
-        container.addGestureRecognizer(tap)
+        container.addGestureRecognizer(tap) // sama aja kayak addTarget cuma buat UIView
         container.isUserInteractionEnabled = true
-        container.accessibilityIdentifier = module.id.rawValue // dipakai buat identifikasi row mana yang di-tap
-        
+        container.accessibilityIdentifier = module.id.rawValue // dipakai untuk identifikasi row mana yang di-tap (misal contrast kah/brightness)
         return container
     }
     
     private func setupShareButton() {
         var shareConfig = UIButton.Configuration.filled()
-        shareConfig.title = "SHARE PROGRESS 🎉"
-        shareConfig.baseBackgroundColor = .systemGreen
         shareConfig.baseForegroundColor = .white
+        shareConfig.baseBackgroundColor = .systemGreen
+        shareConfig.title = "SHARE PROGRESS 🎉"
         shareConfig.cornerStyle = .large
         shareButton.configuration = shareConfig
         shareButton.addTarget(self, action: #selector(shareTapped), for: .touchUpInside)
         shareButton.isHidden = true
+        shareButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
         contentStackView.addArrangedSubview(shareButton)
     }
+#if DEBUG
+    private func setupDebugResetButton() {
+        debugResetButton.setTitle("[DEBUG] Reset All Progress", for: .normal)
+        debugResetButton.setTitleColor(.systemRed, for: .normal)
+        debugResetButton.titleLabel?.font = .systemFont(ofSize: 12)
+        debugResetButton.addTarget(self, action: #selector(debugResetTapped), for: .touchUpInside)
+        contentStackView.addArrangedSubview(debugResetButton)
+        
+        // biar button debug ga kebawahan
+        contentStackView.isLayoutMarginsRelativeArrangement = true
+        contentStackView.layoutMargins = UIEdgeInsets(top: 0, left: 0, bottom: 40, right: 0)
+    }
+    
+    @objc private func debugResetTapped() {
+        ModuleProgressStore.shared.resetAllProgress()
+        viewModel.resetCompletionState()
+        progressPercentageLabel.text = "\(Int(viewModel.progressFraction * 100))% Complete"
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        navigationController?.popToRootViewController(animated: true)
+    }
+    private func refreshProgressDisplay() {
+        progressPercentageLabel.text = "\(Int(viewModel.progressFraction * 100))% Complete"
+        completedBadgeLabel.isHidden = !viewModel.isModuleCompleted
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+    }
+#endif // DEBUG
     
     // MARK: - Static content
-    
     private func configureStaticContent() {
-        screenTitleLabel.text = "Color Grading Basics"
+        screenTitleLabel.text = viewModel.paramsInfo.cardTitle
         positionLabel.text = viewModel.positionLabel
         progressPercentageLabel.text = "\(Int(viewModel.progressFraction * 100))% Complete"
         
         parameterNameLabel.text = viewModel.paramsInfo.title
         extremeLowLabel.text = "\(viewModel.paramsInfo.extremeLowLabel)"
+        extremeLowLabel.numberOfLines = 0
         extremeHighLabel.text = "\(viewModel.paramsInfo.extremeHighLabel)"
+        extremeHighLabel.numberOfLines = 0
         
         slider.minimumValue = viewModel.paramsInfo.sliderRange.lowerBound
         slider.maximumValue = viewModel.paramsInfo.sliderRange.upperBound
         slider.value = viewModel.currentSliderValue
     }
     
-    // MARK: - Binding
     
+    // MARK: - Binding
     private func bindViewModel() {
         viewModel.onPreviewUpdated = { [weak self] image in
             self?.previewImageView.image = image
@@ -333,19 +383,29 @@ final class TutorialModuleViewController: UIViewController {
         viewModel.onShareButtonVisibilityChanged = { [weak self] isVisible in
             self?.shareButton.isHidden = !isVisible
         }
-        viewModel.onExtremePreviewsReady = { [weak self] low, high in
-            self?.extremeLowImageView.image = low
-            self?.extremeHighImageView.image = high
+        viewModel.onExtremePreviewsReady = { [weak self] extremeLow, extremeHigh in
+            self?.extremeLowImageView.image = extremeLow
+            self?.extremeHighImageView.image = extremeHigh
+        }
+        viewModel.onCompletedBadgeVisibilityChanged = { [weak self] isVisible in
+            self?.completedBadgeLabel.isHidden = !isVisible
+        }
+        viewModel.onProgressUpdated = { [weak self] in
+            guard let self else {return}
+            self.progressPercentageLabel.text = "\(Int(self.viewModel.progressFraction * 100))% Complete"
+            DispatchQueue.main.async {
+                self.view.setNeedsLayout()
+                self.view.layoutIfNeeded() // trigger viewDidLayoutSubviews biar progressFillWidthConstraint ke-update
+            }
+            
         }
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let fullWidth = progressTrackView.bounds.width // update lebar progress bar
+        let fullWidth = progressTrackView.bounds.width
         progressFillWidthConstraint.constant = fullWidth * CGFloat(viewModel.progressFraction)
     }
-    
-    
     
     // MARK: - Actions
     
@@ -368,7 +428,7 @@ final class TutorialModuleViewController: UIViewController {
         present(activityVC, animated: true) // show dari bawah ke atas kayak modal
     }
     
-    // pindah ke halaman module lain
+    // pindah ke halaman module lain tanpa balik ke home
     @objc private func upcomingRowTapped(_ gesture: UITapGestureRecognizer) { // UITapGestureRecognizer untuk detect tap pada component yang gabisa diclick
         guard let rawID = gesture.view?.accessibilityIdentifier, let id = GradingParameterID(rawValue: rawID), let module = viewModel.upcomingModules.first(where: {$0.id == id}) else { return }
         let nextViewModel = viewModel.makeDetailViewModel(for: module)

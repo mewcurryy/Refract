@@ -18,7 +18,8 @@ final class TutorialModuleViewModel {
     private var completionState: ModuleCompletionState = ModuleCompletionState()
     private(set) var currentSliderValue: Float // private set gunanya agar bisa di-read dari luar tapi write tetap di dalam file ini
     
-    var isModuleCompleted: Bool { completionState.isComplete }
+    var isModuleCompleted: Bool { completionState.isComplete || progressStore.isComplete(paramsInfo.id) }
+    var onCompletedBadgeVisibilityChanged: ((Bool) -> Void)?
     
     var currentIndex: Int {
         allModules.firstIndex(where: {$0.id == paramsInfo.id}) ?? 0
@@ -29,6 +30,7 @@ final class TutorialModuleViewModel {
     var progressFraction: Double {Double(progressStore.completedCount)/Double(totalModules)} // misal complete 2/4 Module harus Double karena kalo Int dia bakal jadi 0%, padahal harusnya 50%
     var upcomingModules: [GradingParameter] {allModules.filter{$0.id != paramsInfo.id && !progressStore.isComplete($0.id)}}
     
+    var onProgressUpdated: (() -> Void)?
     var onPreviewUpdated: ((UIImage?) -> Void)?
     var onValueLabelUpdated: ((String) -> Void)?
     var onShareButtonVisibilityChanged: ((Bool) -> Void)?
@@ -52,6 +54,7 @@ final class TutorialModuleViewModel {
     func viewDidLoad() {
         updatePreview(sliderValue: currentSliderValue)
         prepareExtremePreviews()
+        onCompletedBadgeVisibilityChanged?(progressStore.isComplete(paramsInfo.id))
     }
     
     func sliderDidChange(to value: Float) {
@@ -94,6 +97,8 @@ final class TutorialModuleViewModel {
         onShareButtonVisibilityChanged?(completionState.isComplete) // kalau onsharebutton ke trigger, kasih tau completion state udah complete
         if completionState.isComplete {
             progressStore.markComplete(paramsInfo.id)
+            onCompletedBadgeVisibilityChanged?(true)
+            onProgressUpdated?() // notify progress untuk berubah
         }
     }
     
@@ -104,5 +109,20 @@ final class TutorialModuleViewModel {
         onExtremePreviewsReady?(engine.renderToImage(low), engine.renderToImage(high))
         completionState.markExtremesViewed()
         evaluateCompletion()
+    }
+
+    // debug function
+    func resetCompletionState() {
+        completionState = ModuleCompletionState()
+        onShareButtonVisibilityChanged?(false)
+        onCompletedBadgeVisibilityChanged?(false)
+        prepareExtremePreviews()
+    }
+    
+    func refreshFromStore() {
+        let isDone = progressStore.isComplete(paramsInfo.id)
+        onCompletedBadgeVisibilityChanged?(isDone)
+        onShareButtonVisibilityChanged?(isDone)
+        onProgressUpdated?()
     }
 }

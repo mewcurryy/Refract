@@ -47,4 +47,12 @@ final class ModuleProgressStore {
     var totalCount: Int { // total case
         GradingParameterID.allCases.count
     }
+    
+    #if DEBUG
+        func resetAllProgress() {
+            completeIDs.removeAll()
+            defaults.removeObject(forKey: defaultsKey)
+            onProgressChanged?()
+        }
+    #endif // DEBUG
 }
