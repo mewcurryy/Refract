@@ -4,7 +4,7 @@ pipeline {
     environment {
         PROJECT = 'Refract.xcodeproj'
         SCHEME = 'Refract'
-        DESTINATION = 'platform=iOS Simulator,name=iPhone 17, OS=latest'
+        DESTINATION = 'platform=iOS Simulator,name=iPhone 17,OS=latest'
     }
 
     stages {
