@@ -13,6 +13,7 @@ Pods/
 # Swift Package Manager
 .build/
 .swiftpm/
+*.swift.plist
 
 # Jenkins/CI artifacts
 build/reports/
