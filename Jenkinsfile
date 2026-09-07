@@ -23,7 +23,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh """
-                    export PATH="\$PATH:\$(ruby -rubygems -e 'puts Gem.user_dir')/bin"
+                    export PATH="$PATH:/Users/davin/.gem/ruby/2.6.0/bin"
                     set -o pipefail && xcodebuild build \
                         -project ${PROJECT} \
                         -scheme ${SCHEME} \
@@ -36,7 +36,7 @@ pipeline {
         stage('Unit Test') {
             steps {
                 sh """
-                    export PATH="\$PATH:\$(ruby -rubygems -e 'puts Gem.user_dir')/bin"
+                    export PATH="$PATH:/Users/davin/.gem/ruby/2.6.0/bin"
                     set -o pipefail && xcodebuild test \
                         -project ${PROJECT} \
                         -scheme ${SCHEME} \
