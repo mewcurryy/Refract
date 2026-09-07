@@ -76,9 +76,9 @@ final class TutorialModuleViewModelTests: XCTestCase {
         let viewModel = makeViewModel(for: GradingParameterCatalog.brightnessModule)
         let nextViewModel = viewModel.makeDetailViewModel(for: GradingParameterCatalog.contrastModule)
         
-        viewModel.viewDidLoad()
-        viewModel.sliderDidChange(to: 0.2)
-        viewModel.tryThisTapped()
+        nextViewModel.viewDidLoad()
+        nextViewModel.sliderDidChange(to: 0.2)
+        nextViewModel.tryThisTapped()
         
         XCTAssertTrue(testStore.isComplete(nextViewModel.paramsInfo.id))
     }
