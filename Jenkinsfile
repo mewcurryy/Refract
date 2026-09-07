@@ -35,7 +35,7 @@ pipeline {
         stage('Unit Test') {
             steps {
                 sh """
-                    set -o pipefail && xcodebuild test \ 
+                    set -o pipefail && xcodebuild test \
                         -project ${PROJECT} \
                         -scheme ${SCHEME} \
                         -destination ${DESTINATION} \
