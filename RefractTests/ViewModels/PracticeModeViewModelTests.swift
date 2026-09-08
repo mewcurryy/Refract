@@ -13,7 +13,7 @@ final class PracticeModeViewModelTests: XCTestCase {
     
     private struct StubHistogramAnalyzer: HistogramAnalyzing {
         let stats: HistogramStats
-        func analyze(_ image: CIImage) -> Refract.HistogramStats {
+        func analyze(original: CIImage, graded: CIImage) -> Refract.HistogramStats {
             stats // return stats diawal
         }
     }
@@ -45,11 +45,15 @@ final class PracticeModeViewModelTests: XCTestCase {
     }
     
     func test_imagePicked_withExtremeStats_produceWarning() {
-        let extremeStats = HistogramStats(highlightClippingPercentage: 0.5, shadowClippingPercentage: 0, saturationDeviation: 0)
+        let extremeStats = HistogramStats(highlightClippingPercentage: 80.0, shadowClippingPercentage: 80.0, saturationDeviation: 0)
         let viewModel = PracticeModeViewModel(histogramAnalyzer: StubHistogramAnalyzer(stats: extremeStats)) // coba inject histogram analyzer dengan extremeStats
-        var receivedFeedback: [FeedbackMessage] = []
-        viewModel.onFeedbackUpdated = { receivedFeedback = $0 } // update receivedFeedback
         viewModel.imagePicked(makeSampleImage())
+        
+        let expectation = XCTestExpectation(description: "Tunggu sampai feedback di-update")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            expectation.fulfill()
+        }
+        let receivedFeedback = viewModel.feedbackMessages
         XCTAssertTrue(receivedFeedback.contains(where: { $0.severity == .warning}))
     }
     
