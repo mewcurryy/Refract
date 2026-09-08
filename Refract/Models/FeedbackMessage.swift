@@ -7,12 +7,12 @@
 
 import Foundation
 
-enum FeedbackSeverity {
+nonisolated enum FeedbackSeverity {
     case ok
     case warning
 }
 
-struct FeedbackMessage: Equatable {
+nonisolated struct FeedbackMessage: Equatable {
     let severity: FeedbackSeverity
     let message: String
 }
