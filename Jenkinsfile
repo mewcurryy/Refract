@@ -5,6 +5,8 @@ pipeline {
         PROJECT = 'Refract.xcodeproj'
         SCHEME = 'Refract'
         DESTINATION = 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+        LANG = 'en_US.UTF-8'
+        LC_ALL = 'en_US.UTF-8'
     }
 
     stages {
@@ -37,22 +39,25 @@ pipeline {
             steps {
                 sh """
                     export PATH="$PATH:/Users/davin/.gem/ruby/2.6.0/bin"
+                    xcrun simctl shutdown all || true
                     set -o pipefail && xcodebuild test \
                         -project "${PROJECT}" \
                         -scheme "${SCHEME}" \
                         -destination "${DESTINATION}" \
+                        -parallel-testing-enabled NO \
+                        -maximum-concurrent-test-simulator-destinations 1 \
                         | xcpretty --report junit --output build/reports/junit.xml
-                """ // pipefail buat mastiin semuanya sukses dan kalo ada 1 yang gagal tetap gagal
+                """
             }
         }
     }
 
     post {
         always {
-            junit 'build/reports/junit.xml'
+            junit allowEmptyResults: true, testResults: 'build/reports/junit.xml'
         }
         success {
-            echo 'build & test success! ✅' 
+            echo 'build & test success! ✅'
         }
         failure {
             echo 'failed. check the log ❌'
