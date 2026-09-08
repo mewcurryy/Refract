@@ -15,6 +15,7 @@ final class HomeViewController: UIViewController {
     private let usernameLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let avatarImageView = UIImageView()
+    private let practiceModeButton = UIButton(type: .system)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,6 +38,7 @@ final class HomeViewController: UIViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(ModuleCardCell.self, forCellReuseIdentifier: ModuleCardCell.reuseIdentifier) // daftarin type cell yang dipakai -> TableView ModuleCardCell
         tableView.tableHeaderView = makeHeaderView()
+        tableView.tableFooterView = makeFooterView()
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
@@ -45,7 +47,6 @@ final class HomeViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-        
     }
     
     private func makeHeaderView() -> UIView {
@@ -94,10 +95,31 @@ final class HomeViewController: UIViewController {
         return container
     }
 
+    private func makeFooterView() -> UIView {
+        let container = UIView()
+        practiceModeButton.setTitle("Practice Mode", for: .normal)
+        practiceModeButton.addTarget(self, action: #selector(practiceModeTapped), for: .touchUpInside)
+        practiceModeButton.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(practiceModeButton)
+        
+        NSLayoutConstraint.activate([
+            practiceModeButton.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
+            practiceModeButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            practiceModeButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20)
+        ])
+        
+        container.frame = CGRect(x: 0, y: 0, width: 0, height: 80)
+        return container
+    }
     private func bindViewModel() {
         viewModel.onProgressUpdated = { [weak self] in
             self?.tableView.reloadData()
         }
+    }
+    
+    @objc private func practiceModeTapped() {
+        let viewModel = viewModel.makePracticeModeViewModel()
+        navigationController?.pushViewController(PracticeModeViewController(viewModel: viewModel), animated: true)
     }
 }
 

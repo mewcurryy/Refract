@@ -318,7 +318,7 @@ final class TutorialModuleViewController: UIViewController {
         shareConfig.baseForegroundColor = .white
         shareConfig.baseBackgroundColor = .systemGreen
         shareConfig.title = "SHARE PROGRESS 🎉"
-        shareConfig.cornerStyle = .large
+        shareConfig.cornerStyle = .capsule
         shareButton.configuration = shareConfig
         shareButton.addTarget(self, action: #selector(shareTapped), for: .touchUpInside)
         shareButton.isHidden = true

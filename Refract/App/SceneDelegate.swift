@@ -21,6 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 //        let viewModel = TutorialModuleViewModel(paramsInfo: GradingParameterCatalog.all.first!, sampleImage: UIImage(named: "sample_photo") ?? UIImage())
 //        let rootVC = TutorialModuleViewController(viewModel: viewModel)
 //        let rootVC = DebugCellPreviewVC()
+//        let rootVC = PracticeModeViewController()
         window.rootViewController = UINavigationController(rootViewController: rootVC)
         window.makeKeyAndVisible()
         self.window = window

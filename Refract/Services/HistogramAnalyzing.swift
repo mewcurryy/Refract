@@ -8,5 +8,5 @@
 import CoreImage
 
 protocol HistogramAnalyzing {
-    func analyze(_ image: CIImage) -> HistogramStats
+    func analyze(original: CIImage, graded: CIImage) -> HistogramStats
 }

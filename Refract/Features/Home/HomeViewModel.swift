@@ -41,4 +41,8 @@ final class HomeViewModel {
     func makeModuleDetailViewModel(at index: Int, sampleImage: UIImage) -> TutorialModuleViewModel {
         TutorialModuleViewModel(paramsInfo: allModules[index], sampleImage: sampleImage, progressStore: progressStore, allModules: allModules)
     }
+    
+    func makePracticeModeViewModel() -> PracticeModeViewModel {
+        PracticeModeViewModel()
+    }
 }

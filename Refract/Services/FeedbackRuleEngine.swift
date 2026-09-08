@@ -17,14 +17,14 @@ enum FeedbackRuleEngine {
         if stats.highlightClippingPercentage > highlightClippingThreshold {
             let percent = Int((stats.highlightClippingPercentage * 100).rounded())
             feedbackMessages.append(FeedbackMessage(
-                severity: .warning, message: "\(percent)% area terang di foto kamu udah pure white, detailnya ilang. Coba turunin Highlights atau Exposure sedikit."
+                severity: .warning, message: "\(percent)% area terang di foto kamu udah pure white, detailnya ilang. Coba turunin Brightness atau Contrast sedikit."
             ))
         }
-        
+
         if stats.shadowClippingPercentage > shadowClippingThreshold {
             let percent = Int((stats.shadowClippingPercentage * 100).rounded())
             feedbackMessages.append(FeedbackMessage(
-                severity: .warning, message: "\(percent)% area gelap di foto kamu udah pure black, detailnya ilang. Coba naikin Shadows dikit biar nggak terlalu gelap."
+                severity: .warning, message: "\(percent)% area gelap di foto kamu udah pure black, detailnya ilang. Coba naikin Brightness sedikit atau turunin Contrast."
             ))
         }
         
