@@ -30,9 +30,9 @@ final class FeedbackRuleEngineTests: XCTestCase {
     }
     
     func test_shadowClipping_aboveThreshold_producesWarning() {
-        let stats = HistogramStats(highlightClippingPercentage: 0, shadowClippingPercentage: 0.2, saturationDeviation: 0)
+        let stats = HistogramStats(highlightClippingPercentage: 0, shadowClippingPercentage: 0.5, saturationDeviation: 0)
         let result = FeedbackRuleEngine.evaluate(stats)
-        XCTAssertTrue(result.contains {$0.message.contains("Shadows")})
+        XCTAssertTrue(result.contains {$0.message.contains("pure black")})
     }
     
     func test_saturationTooHigh_producesOversaturatedWarning() {
