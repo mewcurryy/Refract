@@ -25,9 +25,9 @@ pipeline {
                 sh """
                     export PATH="$PATH:/Users/davin/.gem/ruby/2.6.0/bin"
                     set -o pipefail && xcodebuild build \
-                        -project ${PROJECT} \
-                        -scheme ${SCHEME} \
-                        -destination ${DESTINATION} \
+                        -project "${PROJECT}" \
+                        -scheme "${SCHEME}" \
+                        -destination "${DESTINATION}" \
                         | xcpretty
                 """
             }
@@ -38,9 +38,9 @@ pipeline {
                 sh """
                     export PATH="$PATH:/Users/davin/.gem/ruby/2.6.0/bin"
                     set -o pipefail && xcodebuild test \
-                        -project ${PROJECT} \
-                        -scheme ${SCHEME} \
-                        -destination ${DESTINATION} \
+                        -project "${PROJECT}" \
+                        -scheme "${SCHEME}" \
+                        -destination "${DESTINATION}" \
                         | xcpretty --report junit --output build/reports/junit.xml
                 """ // pipefail buat mastiin semuanya sukses dan kalo ada 1 yang gagal tetap gagal
             }
