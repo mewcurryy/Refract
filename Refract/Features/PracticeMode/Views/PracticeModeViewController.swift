@@ -60,6 +60,11 @@ final class PracticeModeViewController: UIViewController {
         bindViewModel()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+    
     private func setupLayout() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(scrollView)
@@ -103,23 +108,23 @@ final class PracticeModeViewController: UIViewController {
             previewPlaceholderLabel.centerXAnchor.constraint(equalTo: previewImageView.centerXAnchor),
             previewPlaceholderLabel.centerYAnchor.constraint(equalTo: previewImageView.centerYAnchor)
         ])
-//        var importConfig = UIButton.Configuration.tinted()
-//        importConfig.baseBackgroundColor = Palette.accent
-//        importConfig.baseForegroundColor = Palette.primaryText
-//        importConfig.cornerStyle = .medium
-//        importConfig.imagePadding = 8
-//        importConfig.title = "Import from Gallery"
-//        importConfig.image = UIImage(systemName: "photo.on.rectangle.angled")
-//        importConfig.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 20, bottom: 14, trailing: 20)
-//        importButton.configuration = importConfig
-//        importButton.addTarget(self, action: #selector(importTapped), for: .touchUpInside)
-
+        //        var importConfig = UIButton.Configuration.tinted()
+        //        importConfig.baseBackgroundColor = Palette.accent
+        //        importConfig.baseForegroundColor = Palette.primaryText
+        //        importConfig.cornerStyle = .medium
+        //        importConfig.imagePadding = 8
+        //        importConfig.title = "Import from Gallery"
+        //        importConfig.image = UIImage(systemName: "photo.on.rectangle.angled")
+        //        importConfig.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 20, bottom: 14, trailing: 20)
+        //        importButton.configuration = importConfig
+        //        importButton.addTarget(self, action: #selector(importTapped), for: .touchUpInside)
+        
         sliderStack.axis = .vertical
         sliderStack.spacing = 16
         for params in GradingParameterID.allCases {
             sliderStack.addArrangedSubview(makeSliderRow(for: params))
         }
-
+        
         resetButton.setTitle("Reset Sliders", for: .normal)
         resetButton.tintColor = Palette.secondaryText
         resetButton.addTarget(self, action: #selector(resetTapped), for: .touchUpInside)
@@ -128,7 +133,7 @@ final class PracticeModeViewController: UIViewController {
         feedbackTitleLabel.textColor = Palette.primaryText
         feedbackTitleLabel.font = .boldSystemFont(ofSize: 18)
         feedbackTitleLabel.isHidden = true
-
+        
         feedbackStack.axis = .vertical
         feedbackStack.spacing = 8
         feedbackStack.isHidden = true
@@ -171,7 +176,7 @@ final class PracticeModeViewController: UIViewController {
         let valueLabel = UILabel()
         valueLabel.textColor = Palette.secondaryText
         valueLabel.text = "0.00"
-//        row.addArrangedSubview(valueLabel)
+        //        row.addArrangedSubview(valueLabel)
         
         let slider = UISlider()
         slider.minimumValue = -5
@@ -211,7 +216,7 @@ final class PracticeModeViewController: UIViewController {
             resultBadgeLabel.leadingAnchor.constraint(equalTo: resultBadgeView.leadingAnchor, constant: 16),
             resultBadgeLabel.trailingAnchor.constraint(equalTo: resultBadgeView.trailingAnchor, constant: -16),
             resultBadgeLabel.bottomAnchor.constraint(equalTo: resultBadgeView.bottomAnchor, constant: -16)
-            ])
+        ])
     }
     
     private func setupSubmitButton() {
@@ -221,6 +226,8 @@ final class PracticeModeViewController: UIViewController {
         config.baseForegroundColor = .white
         config.cornerStyle = .capsule
         submitButton.configuration = config
+        submitButton.translatesAutoresizingMaskIntoConstraints = false
+        submitButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
         submitButton.addTarget(self, action: #selector(submitTapped), for: .touchUpInside)
         submitButton.isEnabled = false
         submitButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
@@ -233,6 +240,7 @@ final class PracticeModeViewController: UIViewController {
         appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .white
     }
     
     private func bindViewModel() {

@@ -23,7 +23,6 @@ final class TutorialModuleViewController: UIViewController {
     private let contentStackView = UIStackView()
     
     private let backButton = UIButton(type: .system)
-    private let screenTitleLabel = UILabel()
     private let positionLabel = UILabel()
     private let progressPercentageLabel = UILabel()
     private let completedBadgeLabel = UILabel()
@@ -63,19 +62,51 @@ final class TutorialModuleViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.setNavigationBarHidden(true, animated: false)
         view.backgroundColor = Palette.background
-        //        contentStackView.backgroundColor = .white
+        setupNavigationBarAppearance()
+        setupCustomBackButton()
         setupLayout()
         bindViewModel()
         configureStaticContent()
         viewModel.viewDidLoad()
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
         viewModel.refreshFromStore()
+    }
+    
+    // MARK: - Navigation Bar
+    
+    private func setupNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.backgroundColor = Palette.background
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .white
+    }
+    
+    private func setupCustomBackButton() {
+        var backConfig = UIButton.Configuration.plain()
+        backConfig.image = UIImage(systemName: "chevron.backward")
+        backConfig.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
+        backConfig.baseForegroundColor = .white
+        backConfig.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+        
+        backButton.configuration = backConfig
+        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
+        backButton.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        backButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        
+        completedBadgeLabel.text = "✓ COMPLETED"
+        completedBadgeLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+        completedBadgeLabel.textColor = .systemGreen
+        completedBadgeLabel.isHidden = true
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
     }
     
     private func setupLayout() {
@@ -113,31 +144,8 @@ final class TutorialModuleViewController: UIViewController {
     }
     
     private func setupHeaderRow() {
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.tintColor = Palette.primaryText
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-        
-        screenTitleLabel.font = .systemFont(ofSize: 18, weight: .bold)
-        screenTitleLabel.textColor = Palette.primaryText
-        //        screenTitleLabel.text = viewModel.paramsInfo.title
-        
-        completedBadgeLabel.text = "✓ COMPLETED"
-        completedBadgeLabel.font = .systemFont(ofSize: 12, weight: .semibold)
-        completedBadgeLabel.textColor = .systemGreen
-        completedBadgeLabel.isHidden = true
-        
-        let spacer = UIView()
-        
-        let headerRow = UIStackView(arrangedSubviews: [backButton, screenTitleLabel, spacer, completedBadgeLabel])
-        headerRow.axis = .horizontal
-        headerRow.spacing = 15
-        headerRow.alignment = .center
-        
-        contentStackView.addArrangedSubview(headerRow) // untuk masukkin component ke dalam UIStackView secara rapi
-        
         positionLabel.font = .systemFont(ofSize: 14)
         positionLabel.textColor = Palette.secondaryText
-        //        positionLabel.text = viewModel.positionLabel
         
         progressPercentageLabel.font = .systemFont(ofSize: 14)
         progressPercentageLabel.textColor = Palette.secondaryText
@@ -146,6 +154,7 @@ final class TutorialModuleViewController: UIViewController {
         let positionRow = UIStackView(arrangedSubviews: [positionLabel, progressPercentageLabel])
         positionRow.axis = .horizontal
         contentStackView.addArrangedSubview(positionRow)
+        contentStackView.addArrangedSubview(completedBadgeLabel)
     }
     
     private func setupProgressBar() {
@@ -356,7 +365,7 @@ final class TutorialModuleViewController: UIViewController {
     
     // MARK: - Static content
     private func configureStaticContent() {
-        screenTitleLabel.text = viewModel.paramsInfo.cardTitle
+        title = viewModel.paramsInfo.cardTitle
         positionLabel.text = viewModel.positionLabel
         progressPercentageLabel.text = "\(Int(viewModel.progressFraction * 100))% Complete"
         
