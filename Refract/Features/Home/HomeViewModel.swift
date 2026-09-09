@@ -8,7 +8,7 @@
 import UIKit
 
 final class HomeViewModel {
-    let userName: String = "Davin P"
+    let userName: String = "Graders"
     let greetingSubtitle: String = "Let's coloring your image today!"
     
     private let progressStore: ModuleProgressStore

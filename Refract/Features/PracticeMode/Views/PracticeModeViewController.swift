@@ -24,8 +24,6 @@ final class PracticeModeViewController: UIViewController {
     
     private let scrollView = UIScrollView()
     private let contentStackView = UIStackView()
-    private let backButton = UIButton(type: .system)
-    private let screenTitleLabel = UILabel()
     
     private let previewImageView = UIImageView()
     private let importButton = UIButton(type: .system)
@@ -54,10 +52,12 @@ final class PracticeModeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.title = "Practice Mode"
         navigationController?.setNavigationBarHidden(true, animated: false)
         view.backgroundColor = Palette.background
         setupLayout()
         bindViewModel()
+        setupNavigationBarAppearance()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -87,7 +87,6 @@ final class PracticeModeViewController: UIViewController {
             contentStackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -20),
             contentStackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -40)
         ])
-        setupHeaderRow()
         previewImageView.backgroundColor = Palette.cardBackground
         previewImageView.contentMode = .scaleAspectFill
         previewImageView.layer.cornerRadius = 12
@@ -143,25 +142,6 @@ final class PracticeModeViewController: UIViewController {
         [previewImageView, importButton, sliderStack, resetButton, submitButton, resultBadgeView, feedbackTitleLabel, feedbackStack].forEach {
             contentStackView.addArrangedSubview($0)
         }
-    }
-    
-    private func setupHeaderRow() {
-        backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        backButton.tintColor = Palette.primaryText
-        backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
-
-        screenTitleLabel.text = "Practice Mode"
-        screenTitleLabel.font = .systemFont(ofSize: 18, weight: .bold)
-        screenTitleLabel.textColor = Palette.primaryText
-
-        let spacer = UIView()
-
-        let headerRow = UIStackView(arrangedSubviews: [backButton, screenTitleLabel, spacer])
-        headerRow.axis = .horizontal
-        headerRow.spacing = 15
-        headerRow.alignment = .center
-
-        contentStackView.addArrangedSubview(headerRow)
     }
     
     private func makeSliderRow(for parameter: GradingParameterID) -> UIView {
@@ -313,9 +293,6 @@ final class PracticeModeViewController: UIViewController {
         resultBadgeView.isHidden = false
     }
     
-    @objc private func backTapped() {
-        navigationController?.popViewController(animated: true)
-    }
 }
 
 extension PracticeModeViewController: PHPickerViewControllerDelegate {
