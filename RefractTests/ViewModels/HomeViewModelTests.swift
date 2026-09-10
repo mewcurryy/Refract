@@ -31,7 +31,7 @@ final class HomeViewModelTests: XCTestCase {
     }
     
     func test_completedModules_isEmpty_whenNothingCompleted() {
-        XCTAssertFalse(testViewModel.completedModules.isEmpty)
+        XCTAssertTrue(testViewModel.completedModules.isEmpty)
     }
     
     func test_completedModules_includeCompletedModule() {
