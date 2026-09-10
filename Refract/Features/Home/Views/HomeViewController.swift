@@ -15,12 +15,13 @@ final class HomeViewController: UIViewController {
     private let usernameLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let avatarImageView = UIImageView()
-    private let practiceModeButton = UIButton(type: .system)
+    private let practiceModeCard = UIView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(white: 0.07, alpha: 1)
         setupTableView()
+        setupPracticeModeCard()
         bindViewModel()
     }
     
@@ -38,7 +39,6 @@ final class HomeViewController: UIViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(ModuleCardCell.self, forCellReuseIdentifier: ModuleCardCell.reuseIdentifier) // daftarin type cell yang dipakai -> TableView ModuleCardCell
         tableView.tableHeaderView = makeHeaderView()
-        tableView.tableFooterView = makeFooterView()
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
@@ -83,22 +83,64 @@ final class HomeViewController: UIViewController {
         return container
     }
     
-    private func makeFooterView() -> UIView {
-        let container = UIView()
-        practiceModeButton.setTitle("Practice Mode", for: .normal)
-        practiceModeButton.addTarget(self, action: #selector(practiceModeTapped), for: .touchUpInside)
-        practiceModeButton.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(practiceModeButton)
+    private func setupPracticeModeCard() {
+        practiceModeCard.backgroundColor = .systemBlue
+        practiceModeCard.layer.cornerRadius = 18
+        practiceModeCard.translatesAutoresizingMaskIntoConstraints = false
+        practiceModeCard.layer.shadowColor = UIColor.black.cgColor
+        practiceModeCard.layer.shadowOpacity = 0.3
+        practiceModeCard.layer.shadowRadius = 10
+        practiceModeCard.layer.shadowOffset = CGSize(width: 0, height: 4)
+        
+        let icon = UIImageView(image: UIImage(systemName: "wand.and.stars"))
+        icon.tintColor = .white
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        icon.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 22).isActive = true
+        
+        let titleLabel = UILabel()
+        titleLabel.text = "Try Practice Mode"
+        titleLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        titleLabel.textColor = .white
+        
+        let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
+        chevron.tintColor = .white
+        chevron.translatesAutoresizingMaskIntoConstraints = false
+        chevron.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        
+        let spacer = UIView()
+        let row = UIStackView(arrangedSubviews: [icon, titleLabel, spacer, chevron])
+        row.axis = .horizontal
+        row.spacing = 10
+        row.alignment = .center
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.isLayoutMarginsRelativeArrangement = true
+        row.layoutMargins = UIEdgeInsets(top: 14, left: 18, bottom: 14, right: 18)
+        practiceModeCard.addSubview(row)
         
         NSLayoutConstraint.activate([
-            practiceModeButton.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            practiceModeButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            practiceModeButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20)
+            row.topAnchor.constraint(equalTo: practiceModeCard.topAnchor),
+            row.leadingAnchor.constraint(equalTo: practiceModeCard.leadingAnchor),
+            row.trailingAnchor.constraint(equalTo: practiceModeCard.trailingAnchor),
+            row.bottomAnchor.constraint(equalTo: practiceModeCard.bottomAnchor)
         ])
         
-        container.frame = CGRect(x: 0, y: 0, width: 0, height: 80)
-        return container
+        let tap = UITapGestureRecognizer(target: self, action: #selector(practiceModeTapped))
+        practiceModeCard.addGestureRecognizer(tap)
+        practiceModeCard.isUserInteractionEnabled = true
+        
+        view.addSubview(practiceModeCard)
+        NSLayoutConstraint.activate([
+            practiceModeCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            practiceModeCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            practiceModeCard.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
+        ])
+        
+        // kasih table view bottom inset biar card terakhir di list ga ketutup sama floating card
+        tableView.contentInset.bottom = 76
+        tableView.verticalScrollIndicatorInsets.bottom = 76
     }
+    
     private func bindViewModel() {
         viewModel.onProgressUpdated = { [weak self] in
             self?.tableView.reloadData()
@@ -126,7 +168,14 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
             return UITableViewCell() // fallback biar ga crash
         }
         let module = self.module(at: indexPath)
-        cell.configure(title: module.cardTitle, durationMinutes: module.durationMinutes)
+        let sneakPeek = viewModel.sneakPeekImages(for: module)
+        cell.configure(
+            title: module.cardTitle,
+            durationMinutes: module.durationMinutes,
+            beforeImage: sneakPeek.before,
+            afterImage: sneakPeek.after,
+            isComplete: viewModel.isModuleComplete(id: module.id)
+        )
         return cell
     }
     

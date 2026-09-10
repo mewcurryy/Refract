@@ -15,10 +15,16 @@ final class TutorialModuleViewModel {
     private let progressStore: ModuleProgressStore
     private let allModules: [GradingParameter]
     
-    private var completionState: ModuleCompletionState = ModuleCompletionState()
+
+    private let targetTolerance: Float = 0.4
+    
     private(set) var currentSliderValue: Float // private set gunanya agar bisa di-read dari luar tapi write tetap di dalam file ini
     
-    var isModuleCompleted: Bool { completionState.isComplete || progressStore.isComplete(paramsInfo.id) }
+    private(set) var hasHitFirstTarget = false
+    private(set) var hasHitSecondTarget = false
+    private(set) var isExplanationRevealed = false
+    
+    var isModuleCompleted: Bool { progressStore.isComplete(paramsInfo.id) }
     var onCompletedBadgeVisibilityChanged: ((Bool) -> Void)?
     
     var currentIndex: Int {
@@ -35,6 +41,11 @@ final class TutorialModuleViewModel {
     var onValueLabelUpdated: ((String) -> Void)?
     var onShareButtonVisibilityChanged: ((Bool) -> Void)?
     var onExtremePreviewsReady: ((UIImage?, UIImage?) -> Void)?
+    
+    // titik pertama/kedua di slider udah kena apa belum -> buat toggle icon checkmark di marker
+    var onTargetHitStatusChanged: ((_ first: Bool, _ second: Bool) -> Void)?
+    // dipanggil PERSIS SEKALI ketika kedua titik udah kena -> trigger UI nampilin penjelasan dengan animasi
+    var onExplanationRevealed: ((_ title: String, _ body: String) -> Void)?
     
     init(
         paramsInfo: GradingParameter,
@@ -54,24 +65,55 @@ final class TutorialModuleViewModel {
     func viewDidLoad() {
         updatePreview(sliderValue: currentSliderValue)
         prepareExtremePreviews()
-        onCompletedBadgeVisibilityChanged?(progressStore.isComplete(paramsInfo.id))
+        
+        let alreadyComplete = progressStore.isComplete(paramsInfo.id)
+        onCompletedBadgeVisibilityChanged?(alreadyComplete)
+        onShareButtonVisibilityChanged?(alreadyComplete)
+
+        if alreadyComplete {
+            hasHitFirstTarget = true
+            hasHitSecondTarget = true
+            isExplanationRevealed = true
+            onTargetHitStatusChanged?(true, true)
+            onExplanationRevealed?(paramsInfo.explanationTitle, paramsInfo.explanationBody)
+        }
     }
     
     func sliderDidChange(to value: Float) {
         currentSliderValue = value
         updatePreview(sliderValue: value)
-        completionState.markSliderInteracted()
-        evaluateCompletion()
+        checkTryThisTargets(value: value)
     }
     
-    @discardableResult // boleh return value ini ga dipake valuenya
-    func tryThisTapped() -> Float {
-        let target = paramsInfo.sliderRange.upperBound * 0.7
-        currentSliderValue = target
-        updatePreview(sliderValue: target)
-        completionState.markTriedThis()
-        evaluateCompletion()
-        return target
+    // cek apakah posisi slider sekarang "kena" salah satu/kedua titik TRY THIS. Sekali kena, status
+    // tetap true walau slider digeser lagi ke tempat lain (ga perlu pas di titik itu terus).
+    private func checkTryThisTargets(value: Float) {
+        var didChange = false
+        
+        if !hasHitFirstTarget && abs(value - paramsInfo.tryThisLowTarget) <= targetTolerance {
+            hasHitFirstTarget = true
+            didChange = true
+        }
+        if !hasHitSecondTarget && abs(value - paramsInfo.tryThisHighTarget) <= targetTolerance {
+            hasHitSecondTarget = true
+            didChange = true
+        }
+        
+        guard didChange else { return }
+        onTargetHitStatusChanged?(hasHitFirstTarget, hasHitSecondTarget)
+        
+        if hasHitFirstTarget && hasHitSecondTarget && !isExplanationRevealed {
+            isExplanationRevealed = true
+            onExplanationRevealed?(paramsInfo.explanationTitle, paramsInfo.explanationBody)
+        }
+    }
+
+    func markAsComplete() {
+        guard isExplanationRevealed else { return }
+        progressStore.markComplete(paramsInfo.id)
+        onCompletedBadgeVisibilityChanged?(true)
+        onShareButtonVisibilityChanged?(true)
+        onProgressUpdated?() // notify progress untuk berubah
     }
     
     func buildShareItems(extremeHighImage: UIImage?) -> [Any] {
@@ -93,29 +135,24 @@ final class TutorialModuleViewModel {
         onPreviewUpdated?(engine.renderToImage(graded)) // berarti nampilin image yang setelah digraded
     }
     
-    private func evaluateCompletion() {
-        onShareButtonVisibilityChanged?(completionState.isComplete) // kalau onsharebutton ke trigger, kasih tau completion state udah complete
-        if completionState.isComplete {
-            progressStore.markComplete(paramsInfo.id)
-            onCompletedBadgeVisibilityChanged?(true)
-            onProgressUpdated?() // notify progress untuk berubah
-        }
-    }
-    
     private func prepareExtremePreviews() {
         guard let ciImage = CIImage(image: sampleImage) else {return}
         let low = engine.applyGrading(to: ciImage, values: [paramsInfo.id: paramsInfo.sliderRange.lowerBound])
         let high = engine.applyGrading(to: ciImage, values: [paramsInfo.id: paramsInfo.sliderRange.upperBound])
         onExtremePreviewsReady?(engine.renderToImage(low), engine.renderToImage(high))
-        completionState.markExtremesViewed()
-        evaluateCompletion()
     }
 
     // debug function
     func resetCompletionState() {
-        completionState = ModuleCompletionState()
+        hasHitFirstTarget = false
+        hasHitSecondTarget = false
+        isExplanationRevealed = false
+        currentSliderValue = paramsInfo.defaultSliderValue
+        
+        onTargetHitStatusChanged?(false, false)
         onShareButtonVisibilityChanged?(false)
         onCompletedBadgeVisibilityChanged?(false)
+        updatePreview(sliderValue: currentSliderValue)
         prepareExtremePreviews()
     }
     

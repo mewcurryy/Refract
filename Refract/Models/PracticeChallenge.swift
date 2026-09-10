@@ -22,11 +22,11 @@ extension PracticeChallenge {
 //            .contrast: 0.6, // -0.97
 //            .brightness: -0.4, // -0.52
 //            .saturation: 0.8 // 1.65
-            .vibrance: 0.78,
-            .contrast: -0.97,
-            .brightness: -0.52,
-            .saturation: 1.65
+            .vibrance: 1.75,
+            .contrast: 1.8,
+            .brightness: 0.9,
+            .saturation: 1.5
         ],
-        tolerance: 0.5
+        tolerance: 0.45
     )
 }

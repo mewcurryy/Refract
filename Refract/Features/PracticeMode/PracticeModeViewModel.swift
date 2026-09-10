@@ -16,11 +16,13 @@ final class PracticeModeViewModel {
     private var importedCIImage: CIImage?
     private(set) var currentValues: [GradingParameterID : Float] = [:]
     private(set) var feedbackMessages: [FeedbackMessage] = []
+    private(set) var targetPreviewImage: UIImage? // gambar "target" yang harus dikejar user
     private var regradeWorkItem: DispatchWorkItem?
     
     var onPreviewUpdated: ((UIImage?) -> Void)?
     var onFeedbackUpdated: (([FeedbackMessage]) -> Void)?
     var onResultsUpdated: (([GradingParameterID: Bool], Int, Int) -> Void)?
+    var onTargetPreviewUpdated: ((UIImage?) -> Void)? // dipanggil sekali tiap gambar sample baru diload
     var hasImportedImage: Bool { // apakah user import foto atau belum
         importedCIImage != nil
     }
@@ -38,6 +40,7 @@ final class PracticeModeViewModel {
     func imagePicked(_ image: UIImage) { // user pilih foto baru
         importedCIImage = CIImage(image: image)
         currentValues = [:]
+        computeTargetPreview()
         regradeAndAnalyze()
     }
     
@@ -45,6 +48,7 @@ final class PracticeModeViewModel {
         guard let uiImage = UIImage(named: challenge.sampleImageName) else { return }
         importedCIImage = CIImage(image: uiImage)
         currentValues = [:]
+        computeTargetPreview()
         regradeAndAnalyze()
     }
     
@@ -82,6 +86,17 @@ final class PracticeModeViewModel {
             }
             onResultsUpdated?(results, correctCount, challenge.targetValues.count)
         }
+    
+    private func computeTargetPreview() {
+        guard let importedCIImage else {
+            targetPreviewImage = nil
+            onTargetPreviewUpdated?(nil)
+            return
+        }
+        let targetGraded = gradingEngine.applyGrading(to: importedCIImage, values: challenge.targetValues)
+        targetPreviewImage = gradingEngine.renderToImage(targetGraded)
+        onTargetPreviewUpdated?(targetPreviewImage)
+    }
     
     private func regradeAndAnalyze() {
         guard let importedCIImage else {

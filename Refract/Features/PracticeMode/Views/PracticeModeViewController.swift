@@ -24,6 +24,7 @@ final class PracticeModeViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let contentStackView = UIStackView()
     
+    private let targetImageView = UIImageView()
     private let previewImageView = UIImageView()
     private let sliderStack = UIStackView()
     
@@ -85,12 +86,6 @@ final class PracticeModeViewController: UIViewController {
             contentStackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -40)
         ])
         
-        previewImageView.backgroundColor = Palette.cardBackground
-        previewImageView.contentMode = .scaleAspectFill
-        previewImageView.layer.cornerRadius = 12
-        previewImageView.clipsToBounds = true
-        previewImageView.heightAnchor.constraint(equalToConstant: 220).isActive = true
-        
         sliderStack.axis = .vertical
         sliderStack.spacing = 16
         for params in GradingParameterID.allCases {
@@ -104,9 +99,51 @@ final class PracticeModeViewController: UIViewController {
         setupSubmitButton()
         submitButton.isEnabled = true
         
-        [previewImageView, sliderStack, resetButton, submitButton, resultBadgeView].forEach {
+        [makeComparisonHeader(), makeComparisonSection(), sliderStack, resetButton, submitButton, resultBadgeView].forEach {
             contentStackView.addArrangedSubview($0)
         }
+    }
+    
+    private func makeComparisonHeader() -> UIView {
+        let label = UILabel()
+        label.text = "Compare your results with the targets below! 👇"
+        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.textColor = Palette.secondaryText
+        label.numberOfLines = 0
+        return label
+    }
+    
+    // Target = gambar goal, dirender fix dari challenge.targetValues (ga berubah walau slider digeser).
+    // Punya Kamu = live preview, ngikutin slider yang lagi digeser user.
+    // Ditaruh berdampingan biar user paham & bisa nilai sendiri progressnya sebelum tekan Submit.
+    private func makeComparisonSection() -> UIView {
+        let targetColumn = makeImageColumn(caption: "🎯 Target", imageView: targetImageView)
+        let resultColumn = makeImageColumn(caption: "✏️ Yours", imageView: previewImageView)
+        
+        let row = UIStackView(arrangedSubviews: [targetColumn, resultColumn])
+        row.axis = .horizontal
+        row.spacing = 12
+        row.distribution = .fillEqually
+        return row
+    }
+    
+    private func makeImageColumn(caption: String, imageView: UIImageView) -> UIView {
+        let label = UILabel()
+        label.text = caption
+        label.font = .systemFont(ofSize: 13, weight: .semibold)
+        label.textColor = Palette.secondaryText
+        label.textAlignment = .center
+        
+        imageView.backgroundColor = Palette.cardBackground
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.cornerRadius = 12
+        imageView.clipsToBounds = true
+        imageView.heightAnchor.constraint(equalToConstant: 160).isActive = true
+        
+        let column = UIStackView(arrangedSubviews: [label, imageView])
+        column.axis = .vertical
+        column.spacing = 6
+        return column
     }
     
     private func makeSliderRow(for parameter: GradingParameterID) -> UIView {
@@ -204,36 +241,39 @@ final class PracticeModeViewController: UIViewController {
         viewModel.onPreviewUpdated = { [weak self] image in
             self?.previewImageView.image = image
         }
+        viewModel.onTargetPreviewUpdated = { [weak self] image in
+            self?.targetImageView.image = image
+        }
         viewModel.onResultsUpdated = { [weak self] results, correctCount, total in
-                    guard let self else { return }
-                    for (parameter, isCorrect) in results {
-                        let icon = self.resultIconRefs[parameter]
-                        icon?.image = UIImage(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        icon?.tintColor = isCorrect ? Palette.okText : Palette.warningText
-                    }
-                    if correctCount == total {
-                        self.resultBadgeLabel.text = "🎉 Perfect! Semua parameter udah pas."
-                        self.resultBadgeLabel.textColor = Palette.okText
-                        UINotificationFeedbackGenerator().notificationOccurred(.success)
-                    } else {
-                        self.resultBadgeLabel.text = "Benar \(correctCount)/\(total). Cek icon ❌ di slider yang masih salah."
-                        self.resultBadgeLabel.textColor = Palette.warningText
-                        UINotificationFeedbackGenerator().notificationOccurred(.warning)
-                    }
-                    self.resultBadgeView.isHidden = false
-                }
+            guard let self else { return }
+            for (parameter, isCorrect) in results {
+                let icon = self.resultIconRefs[parameter]
+                icon?.image = UIImage(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                icon?.tintColor = isCorrect ? Palette.okText : Palette.warningText
+            }
+            if correctCount == total {
+                self.resultBadgeLabel.text = "🎉 Perfect! All parameters are spot on."
+                self.resultBadgeLabel.textColor = Palette.okText
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            } else {
+                self.resultBadgeLabel.text = "Correct \(correctCount)/\(total). Adjust more to get the perfect score! 😆"
+                self.resultBadgeLabel.textColor = Palette.warningText
+                UINotificationFeedbackGenerator().notificationOccurred(.warning)
+            }
+            self.resultBadgeView.isHidden = false
+        }
     }
     
     @objc private func resetTapped() {
-            viewModel.resetValues()
-            for (parameter, slider) in sliderRefs {
-                slider.setValue(0, animated: true)
-                valueLabelRefs[parameter]?.text = "0.00"
-                resultIconRefs[parameter]?.image = UIImage(systemName: "circle")
-                resultIconRefs[parameter]?.tintColor = Palette.secondaryText
-            }
-            resultBadgeView.isHidden = true
+        viewModel.resetValues()
+        for (parameter, slider) in sliderRefs {
+            slider.setValue(0, animated: true)
+            valueLabelRefs[parameter]?.text = "0.00"
+            resultIconRefs[parameter]?.image = UIImage(systemName: "circle")
+            resultIconRefs[parameter]?.tintColor = Palette.secondaryText
         }
+        resultBadgeView.isHidden = true
+    }
     
     @objc private func submitTapped() {
         viewModel.submitForFeedback()
