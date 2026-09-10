@@ -11,6 +11,7 @@ import CoreImage
 final class PracticeModeViewModel {
     private let gradingEngine: ImageGradingEngine
     private let histogramAnalyzer: HistogramAnalyzing
+    private let challenge: PracticeChallenge
     
     private var importedCIImage: CIImage?
     private(set) var currentValues: [GradingParameterID : Float] = [:]
@@ -19,20 +20,30 @@ final class PracticeModeViewModel {
     
     var onPreviewUpdated: ((UIImage?) -> Void)?
     var onFeedbackUpdated: (([FeedbackMessage]) -> Void)?
+    var onResultsUpdated: (([GradingParameterID: Bool], Int, Int) -> Void)?
     var hasImportedImage: Bool { // apakah user import foto atau belum
         importedCIImage != nil
     }
     
     init(
         gradingEngine: ImageGradingEngine = ImageGradingEngine(),
-        histogramAnalyzer: HistogramAnalyzing = RealHistogramAnalyzer()
+        histogramAnalyzer: HistogramAnalyzing = RealHistogramAnalyzer(),
+        challenge: PracticeChallenge = .current
     ){
         self.gradingEngine = gradingEngine
         self.histogramAnalyzer = histogramAnalyzer
+        self.challenge = challenge
     }
     
     func imagePicked(_ image: UIImage) { // user pilih foto baru
         importedCIImage = CIImage(image: image)
+        currentValues = [:]
+        regradeAndAnalyze()
+    }
+    
+    func loadSampleImage() {
+        guard let uiImage = UIImage(named: challenge.sampleImageName) else { return }
+        importedCIImage = CIImage(image: uiImage)
         currentValues = [:]
         regradeAndAnalyze()
     }
@@ -61,8 +72,17 @@ final class PracticeModeViewModel {
     }
     
     func submitForFeedback() {
-        onFeedbackUpdated?(feedbackMessages)
-    }
+            var results: [GradingParameterID: Bool] = [:]
+            var correctCount = 0
+            for (parameter, target) in challenge.targetValues {
+                let userValue = currentValues[parameter] ?? 0
+                let isCorrect = abs(userValue - target) <= challenge.tolerance
+                results[parameter] = isCorrect
+                if isCorrect { correctCount += 1 }
+            }
+            onResultsUpdated?(results, correctCount, challenge.targetValues.count)
+        }
+    
     private func regradeAndAnalyze() {
         guard let importedCIImage else {
             onPreviewUpdated?(nil) // ngga ada preview, kosongin saja
@@ -70,7 +90,5 @@ final class PracticeModeViewModel {
         }
         let graded = gradingEngine.applyGrading(to: importedCIImage, values: currentValues)
         onPreviewUpdated?(gradingEngine.renderToImage(graded))
-        let stats = histogramAnalyzer.analyze(original: importedCIImage, graded: graded)
-        feedbackMessages = FeedbackRuleEngine.evaluate(stats)
     }
 }
