@@ -34,8 +34,21 @@ final class TutorialModuleViewController: UIViewController {
     private let previewImageView = UIImageView() // foto yang besar
     private let parameterNameLabel = UILabel()
     private let valueLabel = UILabel()
+    
+    // slider + 2 marker TRY THIS yang di-overlay di atas track-nya
+    private let sliderContainer = UIView()
     private let slider = UISlider()
-    private let tryThisButton = UIButton(type: .system)
+    private let firstTargetMarker = UIImageView()
+    private let secondTargetMarker = UIImageView()
+    private var firstMarkerCenterXConstraint: NSLayoutConstraint!
+    private var secondMarkerCenterXConstraint: NSLayoutConstraint!
+    private let tryThisHintLabel = UILabel()
+    
+    // penjelasan konsep, cuma muncul (dengan animasi) setelah kedua titik TRY THIS kena
+    private let explanationCard = UIView()
+    private let explanationTitleLabel = UILabel()
+    private let explanationBodyLabel = UILabel()
+    private let markCompleteButton = UIButton(type: .system)
     
     private let extremeStack = UIStackView()
     private let extremeLowImageView = UIImageView()
@@ -101,9 +114,12 @@ final class TutorialModuleViewController: UIViewController {
         backButton.widthAnchor.constraint(equalToConstant: 32).isActive = true
         backButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
         
-        completedBadgeLabel.text = "✓ COMPLETED"
-        completedBadgeLabel.font = .systemFont(ofSize: 12, weight: .semibold)
-        completedBadgeLabel.textColor = .systemGreen
+        completedBadgeLabel.text = "  ✓ COMPLETED  "
+        completedBadgeLabel.font = .systemFont(ofSize: 12, weight: .bold)
+        completedBadgeLabel.textColor = .white
+        completedBadgeLabel.backgroundColor = .systemGreen
+        completedBadgeLabel.layer.cornerRadius = 10
+        completedBadgeLabel.clipsToBounds = true
         completedBadgeLabel.isHidden = true
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
@@ -134,6 +150,8 @@ final class TutorialModuleViewController: UIViewController {
         setupHeaderRow()
         setupProgressBar()
         setupPreviewSection()
+        setupTryThisSliderOverlay()
+        setupExplanationCard()
         setupExtremeSection()
         setupUpcomingSection()
         setupShareButton()
@@ -199,24 +217,94 @@ final class TutorialModuleViewController: UIViewController {
         let nameValueRow = UIStackView(arrangedSubviews: [parameterNameLabel, valueLabel])
         nameValueRow.axis = .horizontal
         contentStackView.addArrangedSubview(nameValueRow)
+    }
+    
+    private func setupTryThisSliderOverlay() {
+        sliderContainer.translatesAutoresizingMaskIntoConstraints = false
+        contentStackView.addArrangedSubview(sliderContainer)
         
         slider.minimumTrackTintColor = Palette.primaryText
         slider.maximumTrackTintColor = Palette.progressTrack
-        //        slider.thumbTintColor = .blue
         slider.addTarget(self, action: #selector(sliderChanged(_:)), for: .valueChanged)
-        contentStackView.addArrangedSubview(slider)
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        sliderContainer.addSubview(slider)
         
-        var tryThisConfig = UIButton.Configuration.plain()
-        tryThisConfig.title = "TRY THIS"
-        tryThisConfig.baseForegroundColor = Palette.primaryText
-        tryThisConfig.background.strokeColor = Palette.progressTrack
-        tryThisConfig.background.strokeWidth = 1
-        tryThisConfig.background.cornerRadius = 10
-        tryThisConfig.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0)
-        tryThisButton.configuration = tryThisConfig
-        tryThisButton.addTarget(self, action: #selector(tryThisTapped), for: .touchUpInside)
+        NSLayoutConstraint.activate([
+            slider.topAnchor.constraint(equalTo: sliderContainer.topAnchor, constant: 16),
+            slider.leadingAnchor.constraint(equalTo: sliderContainer.leadingAnchor),
+            slider.trailingAnchor.constraint(equalTo: sliderContainer.trailingAnchor),
+            slider.bottomAnchor.constraint(equalTo: sliderContainer.bottomAnchor)
+        ])
         
-        contentStackView.addArrangedSubview(tryThisButton)
+        [firstTargetMarker, secondTargetMarker].forEach { marker in
+            marker.image = UIImage(systemName: "circle.fill")
+            marker.tintColor = Palette.progressTrack
+            marker.backgroundColor = Palette.background
+            marker.layer.cornerRadius = 7
+            marker.translatesAutoresizingMaskIntoConstraints = false
+            sliderContainer.addSubview(marker)
+            NSLayoutConstraint.activate([
+                marker.widthAnchor.constraint(equalToConstant: 14),
+                marker.heightAnchor.constraint(equalToConstant: 14),
+                marker.centerYAnchor.constraint(equalTo: slider.topAnchor, constant: -6)
+            ])
+        }
+        
+        firstMarkerCenterXConstraint = firstTargetMarker.centerXAnchor.constraint(equalTo: slider.leadingAnchor)
+        secondMarkerCenterXConstraint = secondTargetMarker.centerXAnchor.constraint(equalTo: slider.leadingAnchor)
+        firstMarkerCenterXConstraint.isActive = true
+        secondMarkerCenterXConstraint.isActive = true
+        
+        tryThisHintLabel.text = "🎯 Slide the slider until you hit both points above."
+        tryThisHintLabel.font = .systemFont(ofSize: 12)
+        tryThisHintLabel.textColor = Palette.secondaryText
+        tryThisHintLabel.textAlignment = .center
+        tryThisHintLabel.numberOfLines = 0
+        contentStackView.addArrangedSubview(tryThisHintLabel)
+    }
+    
+    private func setupExplanationCard() {
+        explanationCard.backgroundColor = Palette.cardBackground
+        explanationCard.layer.cornerRadius = 14
+        explanationCard.alpha = 0
+        explanationCard.isHidden = true
+        explanationCard.transform = CGAffineTransform(translationX: 0, y: 12)
+        
+        explanationTitleLabel.font = .systemFont(ofSize: 15, weight: .bold)
+        explanationTitleLabel.textColor = Palette.primaryText
+        explanationTitleLabel.numberOfLines = 0
+        
+        explanationBodyLabel.font = .systemFont(ofSize: 14)
+        explanationBodyLabel.textColor = Palette.secondaryText
+        explanationBodyLabel.numberOfLines = 0
+        
+        let textColumn = UIStackView(arrangedSubviews: [explanationTitleLabel, explanationBodyLabel])
+        textColumn.axis = .vertical
+        textColumn.spacing = 6
+        textColumn.translatesAutoresizingMaskIntoConstraints = false
+        textColumn.isLayoutMarginsRelativeArrangement = true
+        textColumn.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        explanationCard.addSubview(textColumn)
+        NSLayoutConstraint.activate([
+            textColumn.topAnchor.constraint(equalTo: explanationCard.topAnchor),
+            textColumn.leadingAnchor.constraint(equalTo: explanationCard.leadingAnchor),
+            textColumn.trailingAnchor.constraint(equalTo: explanationCard.trailingAnchor),
+            textColumn.bottomAnchor.constraint(equalTo: explanationCard.bottomAnchor)
+        ])
+        contentStackView.addArrangedSubview(explanationCard)
+        
+        // tombol ini yang beneran nge-trigger markComplete di ViewModel -> jelas & sengaja (bukan
+        // auto-complete diam-diam), dan cuma muncul setelah penjelasan kebuka.
+        var markCompleteConfig = UIButton.Configuration.filled()
+        markCompleteConfig.title = "Mark as Complete ✓"
+        markCompleteConfig.baseBackgroundColor = .systemGreen
+        markCompleteConfig.baseForegroundColor = .white
+        markCompleteConfig.cornerStyle = .capsule
+        markCompleteButton.configuration = markCompleteConfig
+        markCompleteButton.addTarget(self, action: #selector(markCompleteTapped), for: .touchUpInside)
+        markCompleteButton.isHidden = true
+        markCompleteButton.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        contentStackView.addArrangedSubview(markCompleteButton)
     }
     
     private func setupExtremeSection() {
@@ -261,8 +349,6 @@ final class TutorialModuleViewController: UIViewController {
         upcomingStack.spacing = 10
         contentStackView.addArrangedSubview(upcomingStack)
         
-        //        let dummyModules = GradingParameterCatalog.all
-        //        upcomingStack.addArrangedSubview(makeUpcomingRow(for: viewModel.upcomingModules.first!))
         for module in viewModel.upcomingModules {
             let row = makeUpcomingRow(for: module)
             upcomingStack.addArrangedSubview(row)
@@ -288,19 +374,13 @@ final class TutorialModuleViewController: UIViewController {
         textColumn.axis = .vertical
         textColumn.spacing = 4
         
-        let startBadge = UILabel()
-        startBadge.text = "START"
-        startBadge.font = .systemFont(ofSize: 12, weight: .semibold)
-        startBadge.textColor = Palette.secondaryText
-        startBadge.backgroundColor = Palette.progressTrack
-        startBadge.textAlignment = .center
-        startBadge.layer.cornerRadius = 16
-        startBadge.clipsToBounds = true
-        startBadge.translatesAutoresizingMaskIntoConstraints = false
-        startBadge.widthAnchor.constraint(equalToConstant: 60).isActive = true
-        startBadge.heightAnchor.constraint(equalToConstant: 36).isActive = true
+        let chevron = UIImageView(image: UIImage(systemName: "chevron.right.circle.fill"))
+        chevron.tintColor = .systemBlue
+        chevron.translatesAutoresizingMaskIntoConstraints = false
+        chevron.widthAnchor.constraint(equalToConstant: 26).isActive = true
+        chevron.heightAnchor.constraint(equalToConstant: 26).isActive = true
         
-        let row = UIStackView(arrangedSubviews: [textColumn, startBadge])
+        let row = UIStackView(arrangedSubviews: [textColumn, chevron])
         row.axis = .horizontal
         row.alignment = .center
         row.translatesAutoresizingMaskIntoConstraints = false
@@ -336,7 +416,7 @@ final class TutorialModuleViewController: UIViewController {
     }
 #if DEBUG
     private func setupDebugResetButton() {
-        debugResetButton.setTitle("[DEBUG] Reset All Progress", for: .normal)
+        debugResetButton.setTitle("Reset All Progress", for: .normal)
         debugResetButton.setTitleColor(.systemRed, for: .normal)
         debugResetButton.titleLabel?.font = .systemFont(ofSize: 12)
         debugResetButton.addTarget(self, action: #selector(debugResetTapped), for: .touchUpInside)
@@ -350,16 +430,11 @@ final class TutorialModuleViewController: UIViewController {
     @objc private func debugResetTapped() {
         ModuleProgressStore.shared.resetAllProgress()
         viewModel.resetCompletionState()
+        slider.setValue(viewModel.currentSliderValue, animated: false)
         progressPercentageLabel.text = "\(Int(viewModel.progressFraction * 100))% Complete"
         view.setNeedsLayout()
         view.layoutIfNeeded()
         navigationController?.popToRootViewController(animated: true)
-    }
-    private func refreshProgressDisplay() {
-        progressPercentageLabel.text = "\(Int(viewModel.progressFraction * 100))% Complete"
-        completedBadgeLabel.isHidden = !viewModel.isModuleCompleted
-        view.setNeedsLayout()
-        view.layoutIfNeeded()
     }
 #endif // DEBUG
     
@@ -402,11 +477,29 @@ final class TutorialModuleViewController: UIViewController {
         viewModel.onProgressUpdated = { [weak self] in
             guard let self else {return}
             self.progressPercentageLabel.text = "\(Int(self.viewModel.progressFraction * 100))% Complete"
+            self.updateProgressLabelEmphasis()
             DispatchQueue.main.async {
                 self.view.setNeedsLayout()
                 self.view.layoutIfNeeded() // trigger viewDidLayoutSubviews biar progressFillWidthConstraint ke-update
             }
+        }
+        viewModel.onTargetHitStatusChanged = { [weak self] first, second in
+            guard let self else { return }
+            self.updateMarkerAppearance(self.firstTargetMarker, isHit: first)
+            self.updateMarkerAppearance(self.secondTargetMarker, isHit: second)
             
+            switch (first, second) {
+            case (false, false):
+                self.tryThisHintLabel.text = "🎯 Slide the slider until you hit both points above."
+                self.hideExplanation(animated: false)
+            case (true, false), (false, true):
+                self.tryThisHintLabel.text = "🎯 You've hit one point! Find the other!"
+            case (true, true):
+                self.tryThisHintLabel.text = "Great! Read the explanation, then tap Mark as Complete ⬇️"
+            }
+        }
+        viewModel.onExplanationRevealed = { [weak self] title, body in
+            self?.revealExplanation(title: title, body: body)
         }
     }
     
@@ -414,6 +507,70 @@ final class TutorialModuleViewController: UIViewController {
         super.viewDidLayoutSubviews()
         let fullWidth = progressTrackView.bounds.width
         progressFillWidthConstraint.constant = fullWidth * CGFloat(viewModel.progressFraction)
+        updateTargetMarkerPositions()
+    }
+    
+    // MARK: - TRY THIS marker & explanation UI
+    
+    private func updateTargetMarkerPositions() {
+        let range = slider.maximumValue - slider.minimumValue
+        guard range > 0, slider.bounds.width > 0 else { return }
+        let firstFraction = CGFloat((viewModel.paramsInfo.tryThisLowTarget - slider.minimumValue) / range)
+        let secondFraction = CGFloat((viewModel.paramsInfo.tryThisHighTarget - slider.minimumValue) / range)
+        firstMarkerCenterXConstraint.constant = slider.bounds.width * firstFraction
+        secondMarkerCenterXConstraint.constant = slider.bounds.width * secondFraction
+    }
+    
+    private func updateMarkerAppearance(_ marker: UIImageView, isHit: Bool) {
+        let wasAlreadyHit = marker.tintColor == .systemGreen
+        marker.image = UIImage(systemName: isHit ? "checkmark.circle.fill" : "circle.fill")
+        marker.tintColor = isHit ? .systemGreen : Palette.progressTrack
+        
+        guard isHit, !wasAlreadyHit else { return }
+        marker.transform = CGAffineTransform(scaleX: 0.4, y: 0.4)
+        UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.6) {
+            marker.transform = .identity
+        }
+    }
+    
+    private func revealExplanation(title: String, body: String) {
+        explanationTitleLabel.text = title
+        explanationBodyLabel.text = body
+        explanationCard.isHidden = false
+        markCompleteButton.isHidden = false
+        markCompleteButton.isEnabled = true
+        
+        var config = markCompleteButton.configuration
+        config?.title = "Mark as Complete ✓"
+        config?.baseBackgroundColor = .systemGreen
+        markCompleteButton.configuration = config
+        
+        UIView.animate(withDuration: 0.45, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0.4, options: [.curveEaseOut]) {
+            self.explanationCard.alpha = 1
+            self.explanationCard.transform = .identity
+            self.view.layoutIfNeeded()
+        }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+    
+    private func hideExplanation(animated: Bool) {
+        markCompleteButton.isHidden = true
+        let changes = {
+            self.explanationCard.alpha = 0
+            self.explanationCard.transform = CGAffineTransform(translationX: 0, y: 12)
+        }
+        if animated {
+            UIView.animate(withDuration: 0.2, animations: changes) { _ in self.explanationCard.isHidden = true }
+        } else {
+            changes()
+            explanationCard.isHidden = true
+        }
+    }
+    
+    private func updateProgressLabelEmphasis() {
+        let isAllComplete = viewModel.progressFraction >= 1.0
+        progressPercentageLabel.font = .systemFont(ofSize: 14, weight: isAllComplete ? .bold : .regular)
+        progressPercentageLabel.textColor = isAllComplete ? .systemGreen : Palette.secondaryText
     }
     
     // MARK: - Actions
@@ -426,9 +583,13 @@ final class TutorialModuleViewController: UIViewController {
         viewModel.sliderDidChange(to: sender.value)
     }
     
-    @objc private func tryThisTapped() {
-        let target = viewModel.tryThisTapped()
-        slider.setValue(target, animated: true)
+    @objc private func markCompleteTapped() {
+        viewModel.markAsComplete()
+        markCompleteButton.isEnabled = false
+        var config = markCompleteButton.configuration
+        config?.title = "Selesai ✓"
+        config?.baseBackgroundColor = Palette.progressTrack
+        markCompleteButton.configuration = config
     }
     
     @objc private func shareTapped() {

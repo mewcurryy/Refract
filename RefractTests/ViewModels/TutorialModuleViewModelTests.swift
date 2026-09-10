@@ -57,28 +57,34 @@ final class TutorialModuleViewModelTests: XCTestCase {
     }
     
     func test_isModuleComplete_becomesTrue_afterFullSequence() { // cek apakah module complete setelah ketiga itu dilakukan
-        let viewModel = makeViewModel()
+        let module = GradingParameterCatalog.brightnessModule
+        let viewModel = makeViewModel(for: module)
         viewModel.viewDidLoad()
-        viewModel.sliderDidChange(to: 0.3)
-        viewModel.tryThisTapped()
+        viewModel.sliderDidChange(to: module.tryThisLowTarget)
+        viewModel.sliderDidChange(to: module.tryThisHighTarget)
+        viewModel.markAsComplete()
         XCTAssertTrue(viewModel.isModuleCompleted)
     }
     
     func test_completingModule_markCompleteInProgressStore() {
-        let viewModel = makeViewModel(for: GradingParameterCatalog.brightnessModule)
+        let module = GradingParameterCatalog.brightnessModule
+        let viewModel = makeViewModel(for: module)
         viewModel.viewDidLoad()
-        viewModel.sliderDidChange(to: 0.3)
-        viewModel.tryThisTapped()
+        viewModel.sliderDidChange(to: module.tryThisLowTarget)
+        viewModel.sliderDidChange(to: module.tryThisHighTarget)
+        viewModel.markAsComplete()
         XCTAssertTrue(testStore.isComplete(viewModel.paramsInfo.id))
     }
     
     func test_makeDetailViewModel_sharesTheSameProgressStore() {
         let viewModel = makeViewModel(for: GradingParameterCatalog.brightnessModule)
-        let nextViewModel = viewModel.makeDetailViewModel(for: GradingParameterCatalog.contrastModule)
+        let nextModule = GradingParameterCatalog.contrastModule
+        let nextViewModel = viewModel.makeDetailViewModel(for: nextModule)
         
         nextViewModel.viewDidLoad()
-        nextViewModel.sliderDidChange(to: 0.2)
-        nextViewModel.tryThisTapped()
+        nextViewModel.sliderDidChange(to: nextModule.tryThisLowTarget)
+        nextViewModel.sliderDidChange(to: nextModule.tryThisHighTarget)
+        nextViewModel.markAsComplete()
         
         XCTAssertTrue(testStore.isComplete(nextViewModel.paramsInfo.id))
     }
