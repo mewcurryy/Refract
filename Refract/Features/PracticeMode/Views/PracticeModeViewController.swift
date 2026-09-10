@@ -52,11 +52,12 @@ final class PracticeModeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Practice Mode"
+        self.title = "Practice Mode"
+        navigationController?.setNavigationBarHidden(true, animated: false)
         view.backgroundColor = Palette.background
-        setupNavigationBarAppearance()
         setupLayout()
         bindViewModel()
+        setupNavigationBarAppearance()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -86,7 +87,6 @@ final class PracticeModeViewController: UIViewController {
             contentStackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -20),
             contentStackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -40)
         ])
-        
         previewImageView.backgroundColor = Palette.cardBackground
         previewImageView.contentMode = .scaleAspectFill
         previewImageView.layer.cornerRadius = 12
@@ -210,6 +210,7 @@ final class PracticeModeViewController: UIViewController {
         submitButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
         submitButton.addTarget(self, action: #selector(submitTapped), for: .touchUpInside)
         submitButton.isEnabled = false
+        submitButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
     }
     
     private func setupNavigationBarAppearance() {
@@ -291,6 +292,7 @@ final class PracticeModeViewController: UIViewController {
         }
         resultBadgeView.isHidden = false
     }
+    
 }
 
 extension PracticeModeViewController: PHPickerViewControllerDelegate {

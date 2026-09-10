@@ -88,13 +88,13 @@ final class HomeViewController: UIViewController {
             headerRow.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
             headerRow.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
             headerRow.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
-        ])
+                                    ])
         
         // UITableView.tableHeaderView perlu frame eksplisit, gak bisa autolayout doang
         container.frame = CGRect(x: 0, y: 0, width: 0, height: 150)
         return container
     }
-
+    
     private func makeFooterView() -> UIView {
         let container = UIView()
         practiceModeButton.setTitle("Practice Mode", for: .normal)
@@ -134,7 +134,9 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ModuleCardCell.reuseIdentifier, for: indexPath) as! ModuleCardCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ModuleCardCell.reuseIdentifier, for: indexPath) as? ModuleCardCell else {
+            return UITableViewCell() // fallback biar ga crash
+        }
         let module = self.module(at: indexPath)
         cell.configure(title: module.cardTitle, durationMinutes: module.durationMinutes)
         return cell
