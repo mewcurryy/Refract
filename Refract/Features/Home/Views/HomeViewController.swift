@@ -53,7 +53,7 @@ final class HomeViewController: UIViewController {
         let container = UIView()
         helloLabel.text = "Hello,"
         helloLabel.textColor = UIColor(white: 0.7, alpha: 1)
-        helloLabel.font = .systemFont(ofSize: 20)
+        helloLabel.font = .systemFont(ofSize: 18)
         
         usernameLabel.text = "\(viewModel.userName)"
         usernameLabel.font = .systemFont(ofSize: 26, weight: .bold)
@@ -65,33 +65,21 @@ final class HomeViewController: UIViewController {
         
         let textColumn = UIStackView(arrangedSubviews: [helloLabel, usernameLabel, subtitleLabel])
         textColumn.axis = .vertical
-        textColumn.spacing = 4
+        textColumn.spacing = 2
+        textColumn.translatesAutoresizingMaskIntoConstraints = false
+        textColumn.setCustomSpacing(8, after: usernameLabel)
         
-        avatarImageView.image = UIImage(systemName: "person.crop.circle.fill")
-        avatarImageView.tintColor = .black
-        avatarImageView.contentMode = .scaleAspectFill
-        avatarImageView.backgroundColor = .white
-        avatarImageView.layer.cornerRadius = 40
-        avatarImageView.clipsToBounds = true
-        avatarImageView.translatesAutoresizingMaskIntoConstraints = false
-        avatarImageView.widthAnchor.constraint(equalToConstant: 80).isActive = true
-        avatarImageView.heightAnchor.constraint(equalToConstant: 80).isActive = true
-        
-        let headerRow = UIStackView(arrangedSubviews: [textColumn, avatarImageView])
-        headerRow.axis = .horizontal
-        headerRow.alignment = .top
-        headerRow.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(headerRow)
+        container.addSubview(textColumn)
         
         NSLayoutConstraint.activate([ // constant = margin/jarak
-            headerRow.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            headerRow.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            headerRow.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            headerRow.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
-                                    ])
+            textColumn.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
+            textColumn.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            textColumn.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            textColumn.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
+        ])
         
         // UITableView.tableHeaderView perlu frame eksplisit, gak bisa autolayout doang
-        container.frame = CGRect(x: 0, y: 0, width: 0, height: 150)
+        container.frame = CGRect(x: 0, y: 0, width: 0, height: 110)
         return container
     }
     
@@ -155,8 +143,8 @@ extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
         NSLayoutConstraint.activate([
             label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
             label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            label.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12),
+            label.topAnchor.constraint(equalTo: container.topAnchor, constant: 12),
+            label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -6),
         ])
         return container
     }

@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import PhotosUI
 
 final class PracticeModeViewController: UIViewController {
     
@@ -26,20 +25,17 @@ final class PracticeModeViewController: UIViewController {
     private let contentStackView = UIStackView()
     
     private let previewImageView = UIImageView()
-    private let importButton = UIButton(type: .system)
     private let sliderStack = UIStackView()
-    private let feedbackTitleLabel = UILabel()
-    private let feedbackStack = UIStackView()
     
     private let resultBadgeView = UIView()
     private let resultBadgeLabel = UILabel()
     private let submitButton = UIButton(type: .system)
     private let resetButton = UIButton(type: .system)
-    private let previewPlaceholderLabel = UILabel()
     
     // simpan referensi slider & label per parameter, biar bisa reset tanpa rebuild UI
     private var sliderRefs: [GradingParameterID : UISlider] = [:]
     private var valueLabelRefs: [GradingParameterID : UILabel] = [:]
+    private var resultIconRefs: [GradingParameterID: UIImageView] = [:]
     
     init(viewModel: PracticeModeViewModel = PracticeModeViewModel()) {
         self.viewModel = viewModel
@@ -58,6 +54,7 @@ final class PracticeModeViewController: UIViewController {
         setupLayout()
         bindViewModel()
         setupNavigationBarAppearance()
+        viewModel.loadSampleImage()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -87,36 +84,12 @@ final class PracticeModeViewController: UIViewController {
             contentStackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -20),
             contentStackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -40)
         ])
+        
         previewImageView.backgroundColor = Palette.cardBackground
         previewImageView.contentMode = .scaleAspectFill
         previewImageView.layer.cornerRadius = 12
         previewImageView.clipsToBounds = true
         previewImageView.heightAnchor.constraint(equalToConstant: 220).isActive = true
-        
-        previewImageView.isUserInteractionEnabled = true
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(importTapped))
-        previewImageView.addGestureRecognizer(tapGesture)
-        
-        previewPlaceholderLabel.text = "📷  Tap to import photo"
-        previewPlaceholderLabel.textColor = Palette.secondaryText
-        previewPlaceholderLabel.font = .systemFont(ofSize: 14, weight: .medium)
-        previewPlaceholderLabel.translatesAutoresizingMaskIntoConstraints = false
-        previewImageView.addSubview(previewPlaceholderLabel)
-        
-        NSLayoutConstraint.activate([
-            previewPlaceholderLabel.centerXAnchor.constraint(equalTo: previewImageView.centerXAnchor),
-            previewPlaceholderLabel.centerYAnchor.constraint(equalTo: previewImageView.centerYAnchor)
-        ])
-        //        var importConfig = UIButton.Configuration.tinted()
-        //        importConfig.baseBackgroundColor = Palette.accent
-        //        importConfig.baseForegroundColor = Palette.primaryText
-        //        importConfig.cornerStyle = .medium
-        //        importConfig.imagePadding = 8
-        //        importConfig.title = "Import from Gallery"
-        //        importConfig.image = UIImage(systemName: "photo.on.rectangle.angled")
-        //        importConfig.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 20, bottom: 14, trailing: 20)
-        //        importButton.configuration = importConfig
-        //        importButton.addTarget(self, action: #selector(importTapped), for: .touchUpInside)
         
         sliderStack.axis = .vertical
         sliderStack.spacing = 16
@@ -127,19 +100,11 @@ final class PracticeModeViewController: UIViewController {
         resetButton.setTitle("Reset Sliders", for: .normal)
         resetButton.tintColor = Palette.secondaryText
         resetButton.addTarget(self, action: #selector(resetTapped), for: .touchUpInside)
-        
-        feedbackTitleLabel.text = "Feedback"
-        feedbackTitleLabel.textColor = Palette.primaryText
-        feedbackTitleLabel.font = .boldSystemFont(ofSize: 18)
-        feedbackTitleLabel.isHidden = true
-        
-        feedbackStack.axis = .vertical
-        feedbackStack.spacing = 8
-        feedbackStack.isHidden = true
         setupResultBadge()
         setupSubmitButton()
+        submitButton.isEnabled = true
         
-        [previewImageView, importButton, sliderStack, resetButton, submitButton, resultBadgeView, feedbackTitleLabel, feedbackStack].forEach {
+        [previewImageView, sliderStack, resetButton, submitButton, resultBadgeView].forEach {
             contentStackView.addArrangedSubview($0)
         }
     }
@@ -153,10 +118,22 @@ final class PracticeModeViewController: UIViewController {
         nameLabel.text = GradingParameterCatalog.all.first { $0.id == parameter }?.title
         nameLabel.textColor = Palette.primaryText
         
+        let resultIcon = UIImageView(image: UIImage(systemName: "circle"))
+        resultIcon.tintColor = Palette.secondaryText
+        resultIcon.translatesAutoresizingMaskIntoConstraints = false
+        resultIcon.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        resultIcon.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        resultIconRefs[parameter] = resultIcon
+        
+        let nameRow = UIStackView(arrangedSubviews: [nameLabel, resultIcon])
+        nameRow.axis = .horizontal
+        nameRow.spacing = 8
+        
         let valueLabel = UILabel()
         valueLabel.textColor = Palette.secondaryText
         valueLabel.text = "0.00"
         //        row.addArrangedSubview(valueLabel)
+        
         
         let slider = UISlider()
         slider.minimumValue = -5
@@ -164,13 +141,15 @@ final class PracticeModeViewController: UIViewController {
         slider.value = 0
         
         // cara baru dari addTarget
-        slider.addAction(UIAction { [weak self, weak slider, weak valueLabel] _ in
+        slider.addAction(UIAction { [weak self, weak slider, weak valueLabel, weak resultIcon] _ in
             guard let self, let slider else { return } // unwrap weak reference
             self.viewModel.sliderDidChange(parameter: parameter, value: slider.value) // update currentValues dengan nilai slider terbaru
             valueLabel?.text = String(format: "%.2f", slider.value)
+            resultIcon?.image = UIImage(systemName: "circle")
+            resultIcon?.tintColor = Palette.secondaryText
         }, for: .valueChanged)
         
-        row.addArrangedSubview(nameLabel)
+        row.addArrangedSubview(nameRow)
         row.addArrangedSubview(slider)
         row.addArrangedSubview(valueLabel)
         
@@ -209,8 +188,6 @@ final class PracticeModeViewController: UIViewController {
         submitButton.translatesAutoresizingMaskIntoConstraints = false
         submitButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
         submitButton.addTarget(self, action: #selector(submitTapped), for: .touchUpInside)
-        submitButton.isEnabled = false
-        submitButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
     }
     
     private func setupNavigationBarAppearance() {
@@ -226,85 +203,40 @@ final class PracticeModeViewController: UIViewController {
     private func bindViewModel() {
         viewModel.onPreviewUpdated = { [weak self] image in
             self?.previewImageView.image = image
-            self?.previewPlaceholderLabel.isHidden = image != nil // hidden kalau ada foto, kalau ga ada foto placeholder muncul
-            self?.submitButton.isEnabled = self?.viewModel.hasImportedImage ?? false
         }
-        viewModel.onFeedbackUpdated = { [weak self] feedbackMessage in
-            self?.feedbackStack.isHidden = false
-            self?.feedbackTitleLabel.isHidden = false
-            self?.renderFeedback(feedbackMessage)
-        }
-    }
-    
-    private func renderFeedback(_ feedbackMessage: [FeedbackMessage]) {
-        feedbackStack.arrangedSubviews.forEach { $0.removeFromSuperview() } // bersihin feedback yang lama
-        let warnings = feedbackMessage.filter({ $0.severity == .warning })
-        
-        if warnings.isEmpty {
-            feedbackTitleLabel.isHidden = true
-            feedbackStack.isHidden = true
-            return
-        }
-        
-        for messages in warnings {
-            let label = UILabel()
-            label.numberOfLines = 0
-            label.text = messages.message
-            label.textColor = Palette.warningText
-            feedbackStack.addArrangedSubview(label)
-        }
-    }
-    
-    @objc private func importTapped() {
-        var configuration = PHPickerConfiguration()
-        configuration.filter = .images
-        configuration.selectionLimit = 1
-        let picker = PHPickerViewController(configuration: configuration)
-        picker.delegate = self
-        present(picker, animated: true)
+        viewModel.onResultsUpdated = { [weak self] results, correctCount, total in
+                    guard let self else { return }
+                    for (parameter, isCorrect) in results {
+                        let icon = self.resultIconRefs[parameter]
+                        icon?.image = UIImage(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        icon?.tintColor = isCorrect ? Palette.okText : Palette.warningText
+                    }
+                    if correctCount == total {
+                        self.resultBadgeLabel.text = "🎉 Perfect! Semua parameter udah pas."
+                        self.resultBadgeLabel.textColor = Palette.okText
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    } else {
+                        self.resultBadgeLabel.text = "Benar \(correctCount)/\(total). Cek icon ❌ di slider yang masih salah."
+                        self.resultBadgeLabel.textColor = Palette.warningText
+                        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                    }
+                    self.resultBadgeView.isHidden = false
+                }
     }
     
     @objc private func resetTapped() {
-        viewModel.resetValues()
-        for (parameter, slider) in sliderRefs {
-            slider.setValue(0, animated: true)
-            valueLabelRefs[parameter]?.text = "0.00"
+            viewModel.resetValues()
+            for (parameter, slider) in sliderRefs {
+                slider.setValue(0, animated: true)
+                valueLabelRefs[parameter]?.text = "0.00"
+                resultIconRefs[parameter]?.image = UIImage(systemName: "circle")
+                resultIconRefs[parameter]?.tintColor = Palette.secondaryText
+            }
+            resultBadgeView.isHidden = true
         }
-        resultBadgeView.isHidden = true
-        feedbackStack.isHidden = true
-        feedbackTitleLabel.isHidden = true
-    }
     
     @objc private func submitTapped() {
         viewModel.submitForFeedback()
-        let feedbackMessages = viewModel.feedbackMessages
-        let warningCount = feedbackMessages.filter { $0.severity == .warning }.count // itung berapa yang warning
-        
-        if warningCount == 0 {
-            resultBadgeLabel.text = "🎉 Perfect Balance! Grading kamu udah mantap."
-            resultBadgeLabel.textColor = Palette.okText
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-        } else {
-            let issueWord = warningCount == 1 ? "issue" : "issues"
-            resultBadgeLabel.text = " Masih ada \(warningCount) \(issueWord), coba lihat feedback di atas dan sesuaikan lagi!"
-            resultBadgeLabel.textColor = Palette.warningText
-            UINotificationFeedbackGenerator().notificationOccurred(.warning)
-        }
-        resultBadgeView.isHidden = false
     }
     
-}
-
-extension PracticeModeViewController: PHPickerViewControllerDelegate {
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        picker.dismiss(animated: true) // tutup picker
-        guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else { return } // canLoadObject untuk cek dulu apakah provider ini bisa di-convert jadi UIImage
-        
-        provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
-            guard let image = object as? UIImage else { return }
-            DispatchQueue.main.async { // untuk jalanin di main thread
-                self?.viewModel.imagePicked(image)
-            }
-        }
-    }
 }
