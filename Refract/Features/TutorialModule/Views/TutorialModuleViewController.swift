@@ -587,7 +587,7 @@ final class TutorialModuleViewController: UIViewController {
         viewModel.markAsComplete()
         markCompleteButton.isEnabled = false
         var config = markCompleteButton.configuration
-        config?.title = "Selesai ✓"
+        config?.title = "Completed ✓"
         config?.baseBackgroundColor = Palette.progressTrack
         markCompleteButton.configuration = config
     }
