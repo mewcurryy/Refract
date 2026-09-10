@@ -44,17 +44,54 @@ final class PracticeModeViewModelTests: XCTestCase {
         XCTAssertNotNil(receivedImage)
     }
     
-    func test_imagePicked_withExtremeStats_produceWarning() {
-        let extremeStats = HistogramStats(highlightClippingPercentage: 80.0, shadowClippingPercentage: 80.0, saturationDeviation: 0)
-        let viewModel = PracticeModeViewModel(histogramAnalyzer: StubHistogramAnalyzer(stats: extremeStats)) // coba inject histogram analyzer dengan extremeStats
-        viewModel.imagePicked(makeSampleImage())
+    func test_submitForFeedback_withValuesFarFromTarget_producesIncorrectResults() {
+        let challenge = PracticeChallenge(
+            sampleImageName: "practice_sunset_coast",
+            targetValues: [.vibrance: 1.2, .contrast: 0.6, .brightness: -0.4],
+            tolerance: 0.5
+        )
+        let viewModel = PracticeModeViewModel(challenge: challenge)
+        viewModel.loadSampleImage()
         
-        let expectation = XCTestExpectation(description: "Tunggu sampai feedback di-update")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        // set slider jauh dari target biar salah
+        viewModel.sliderDidChange(parameter: .vibrance, value: -5)
+        viewModel.sliderDidChange(parameter: .contrast, value: -5)
+        viewModel.sliderDidChange(parameter: .brightness, value: 5)
+        
+        let expectation = XCTestExpectation(description: "Tunggu hasil submit")
+        viewModel.onResultsUpdated = { results, correctCount, total in
+            XCTAssertEqual(correctCount, 0)
+            XCTAssertEqual(total, 3)
+            XCTAssertTrue(results.values.allSatisfy { $0 == false })
             expectation.fulfill()
         }
-        let receivedFeedback = viewModel.feedbackMessages
-        XCTAssertTrue(receivedFeedback.contains(where: { $0.severity == .warning}))
+        
+        viewModel.submitForFeedback()
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func test_submitForFeedback_withValuesMatchingTarget_producesCorrectResults() {
+        let challenge = PracticeChallenge(
+            sampleImageName: "practice_sunset_coast",
+            targetValues: [.vibrance: 1.2, .contrast: 0.6, .brightness: -0.4],
+            tolerance: 0.5
+        )
+        let viewModel = PracticeModeViewModel(challenge: challenge)
+        viewModel.loadSampleImage()
+        
+        // set slider persis di target biar benar semua
+        viewModel.sliderDidChange(parameter: .vibrance, value: 1.2)
+        viewModel.sliderDidChange(parameter: .contrast, value: 0.6)
+        viewModel.sliderDidChange(parameter: .brightness, value: -0.4)
+        
+        let expectation = XCTestExpectation(description: "Tunggu hasil submit")
+        viewModel.onResultsUpdated = { results, correctCount, total in
+            XCTAssertEqual(correctCount, total)
+            expectation.fulfill()
+        }
+        
+        viewModel.submitForFeedback()
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func test_sliderDidChange_updateCurrentValue() {
