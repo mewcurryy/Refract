@@ -1,6 +1,6 @@
 # Refract
 
-**Learn photo color grading by actually doing it, not by reading a wall of text.**
+**An interactive, gamified iOS educational app that teaches color grading for photography beginners, featuring guided modules and practice modes.**
 
 Refract is an iOS app that teaches you how Brightness, Contrast, Saturation, and Vibrance actually change a photo. No jargon-heavy tutorials, no guessing. You drag a slider, you watch the image change in real time, and you get instant feedback on whether your edit actually looks good or just blew out the highlights.
 
