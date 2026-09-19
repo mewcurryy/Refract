@@ -40,6 +40,7 @@ pipeline {
                 sh """
                     export PATH="$PATH:/Users/davin/.gem/ruby/2.6.0/bin"
                     xcrun simctl shutdown all || true
+                    xcrun simctl delete unavailable || true
                     set -o pipefail && xcodebuild test \
                         -project "${PROJECT}" \
                         -scheme "${SCHEME}" \
