@@ -6,7 +6,6 @@
 //
 
 import CoreImage
-import CoreGraphics
 
 final class RealHistogramAnalyzer: HistogramAnalyzing {
     private let context = CIContext()
