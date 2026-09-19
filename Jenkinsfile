@@ -4,7 +4,7 @@ pipeline {
     environment {
         PROJECT = 'Refract.xcodeproj'
         SCHEME = 'Refract'
-        DESTINATION = 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+        DESTINATION = 'platform=iOS Simulator,name=iPhone 17,OS=latest'
         LANG = 'en_US.UTF-8'
         LC_ALL = 'en_US.UTF-8'
     }
